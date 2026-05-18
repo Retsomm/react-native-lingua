@@ -1,6 +1,7 @@
 import { useAuth, useClerk, useUser } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
+import { useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -9,13 +10,29 @@ export default function ProfileScreen() {
   const { signOut } = useClerk();
   const { user } = useUser();
   const insets = useSafeAreaInsets();
+  const [isSigningOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   const emailAddress = user?.primaryEmailAddress?.emailAddress ?? "";
   const displayName = user?.fullName ?? user?.firstName ?? "Language Learner";
 
   const handleSignOut = async () => {
-    await signOut();
-    router.replace("/onboarding");
+    if (isSigningOut) {
+      return;
+    }
+
+    setSigningOut(true);
+    setSignOutError(null);
+
+    try {
+      await signOut();
+      router.replace("/onboarding");
+    } catch (error) {
+      console.error("Failed to sign out", error);
+      setSignOutError("Unable to sign out. Please try again.");
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   if (!isLoaded) {
@@ -84,13 +101,19 @@ export default function ProfileScreen() {
 
           <Pressable
             className="h-[62px] flex-row items-center justify-center gap-[10px] rounded-[14px] bg-[#ff4b4b]"
+            disabled={isSigningOut}
             onPress={handleSignOut}
           >
             <Ionicons name="log-out-outline" size={24} color="#ffffff" />
             <Text className="font-poppins-bold text-[18px] leading-[25px] text-white">
-              Sign Out
+              {isSigningOut ? "Signing Out..." : "Sign Out"}
             </Text>
           </Pressable>
+          {signOutError ? (
+            <Text className="text-center font-poppins text-[14px] leading-[21px] text-[#ff4b4b]">
+              {signOutError}
+            </Text>
+          ) : null}
         </View>
       </View>
     </View>

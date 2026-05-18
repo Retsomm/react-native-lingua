@@ -237,7 +237,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
   return (
     <>
       <ScrollView
-        className="flex-1 bg-white"
+        style={styles.scrollView}
         contentContainerStyle={{
           flexGrow: 1,
           paddingBottom: Math.max(insets.bottom, 28) + 18,
@@ -293,7 +293,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
                 placeholderTextColor="#06112B"
                 textContentType="emailAddress"
                 value={emailAddress}
-                className="mt-[10px] p-0 font-poppins text-[18px] leading-[24px] text-lingua-text-primary"
+                style={styles.textInput}
               />
             </View>
 
@@ -310,7 +310,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
                     placeholderTextColor="#06112B"
                     textContentType="newPassword"
                     value={password}
-                    className="mt-[10px] p-0 font-poppins text-[18px] leading-[24px] text-lingua-text-primary"
+                    style={styles.textInput}
                   />
                 </View>
                 <Pressable
@@ -495,6 +495,18 @@ const styles = StyleSheet.create({
     opacity: 0,
     position: "absolute",
     width: 0,
+  },
+  scrollView: {
+    backgroundColor: "#ffffff",
+    flex: 1,
+  },
+  textInput: {
+    color: "#06112B",
+    fontFamily: "Poppins-Regular",
+    fontSize: 18,
+    lineHeight: 24,
+    marginTop: 10,
+    padding: 0,
   },
   verificationKeyboardView: {
     backgroundColor: "rgba(0, 0, 0, 0.35)",
