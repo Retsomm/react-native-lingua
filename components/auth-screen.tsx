@@ -9,7 +9,7 @@ import {
 import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -56,10 +56,26 @@ const socialProviders = [
     strategy: "oauth_apple",
   },
 ] satisfies {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   strategy: SocialStrategy;
 }[];
+
+function getPendingSignUpMessage(status: string | null) {
+  if (status === "missing_requirements") {
+    return "Your account needs a little more information before sign up can finish.";
+  }
+
+  return "Sign up is not complete yet. Please finish the required account steps.";
+}
+
+function getPendingSignInMessage(status: string | null) {
+  if (status === "needs_second_factor" || status === "needs_client_trust") {
+    return "This account needs another verification step before sign in can finish.";
+  }
+
+  return "Sign in is not complete yet. Please finish the required account steps.";
+}
 
 function getAuthErrorMessage(error: unknown) {
   if (
@@ -163,6 +179,11 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           return;
         }
 
+        if (signUp.status !== "complete") {
+          setAuthError(getPendingSignUpMessage(signUp.status));
+          return;
+        }
+
         const { error: finalizeError } = await signUp.finalize({
           navigate: async () => {
             router.replace("/");
@@ -178,6 +199,11 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
         if (error) {
           setAuthError(error.message);
+          return;
+        }
+
+        if (signIn.status !== "complete") {
+          setAuthError(getPendingSignInMessage(signIn.status));
           return;
         }
 
@@ -215,14 +241,34 @@ export function AuthScreen({ mode }: AuthScreenProps) {
         // No browser session is open. Continue with a new OAuth attempt.
       }
 
-      const { createdSessionId, setActive } = await startSSOFlow({
+      const {
+        createdSessionId,
+        setActive,
+        signIn: ssoSignIn,
+        signUp: ssoSignUp,
+      } = await startSSOFlow({
         redirectUrl,
         strategy,
       });
 
-      if (createdSessionId) {
-        await setActive?.({ session: createdSessionId });
+      const sessionId =
+        createdSessionId ??
+        ssoSignIn?.createdSessionId ??
+        ssoSignUp?.createdSessionId;
+
+      if (sessionId) {
+        await setActive?.({ session: sessionId });
         router.replace("/");
+        return;
+      }
+
+      if (ssoSignIn) {
+        setAuthError(getPendingSignInMessage(ssoSignIn.status));
+        return;
+      }
+
+      if (ssoSignUp) {
+        setAuthError(getPendingSignUpMessage(ssoSignUp.status));
         return;
       }
 

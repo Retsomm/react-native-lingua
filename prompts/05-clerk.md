@@ -38,11 +38,11 @@ Use the following tabs to choose your preferred approach:
 
 This approach uses Clerk's [`pre-built native components`](https://clerk.com/docs/reference/expo/native-components/overview.md) that render using SwiftUI on iOS and Jetpack Compose on Android. This requires the least code and a [development build](https://docs.expo.dev/develop/development-builds/introduction/).
 
-1. ## Enable Native API
+1. ## Enable Native API — Native Components
 
    In the Clerk Dashboard, navigate to the [**Native applications**](https://dashboard.clerk.com/~/native-applications) page and ensure that the Native API is enabled. This is required to integrate Clerk in your native application.
 
-2. ## Create a new Expo app
+2. ## Create a new Expo app — Native Components
 
    If you don't already have an Expo app, run the following commands to [create a new one](https://docs.expo.dev/tutorial/create-your-first-app/).
 
@@ -51,7 +51,7 @@ This approach uses Clerk's [`pre-built native components`](https://clerk.com/doc
    cd clerk-expo
    ```
 
-3. ## Remove default template files
+3. ## Remove default template files — Native Components
 
    The default Expo template includes files that will conflict with the routes you'll create in this guide. Remove the conflicting files:
 
@@ -73,7 +73,7 @@ This approach uses Clerk's [`pre-built native components`](https://clerk.com/doc
 
    > You can skip this step if you used `npx create-expo-app@latest --template blank` to create your app. However, the blank template doesn't include [Expo Router](https://docs.expo.dev/router/introduction/) or pre-styled UI components. You'll need to install `expo-router` and its dependencies to follow along with this guide.
 
-4. ## Install dependencies
+4. ## Install dependencies — Native Components
 
    Install the required packages. Use `npx expo install` to ensure SDK-compatible versions.
    - The [`Clerk Expo SDK`](https://clerk.com/docs/reference/expo/overview.md) gives you access to prebuilt components, hooks, and helpers to make user authentication easier.
@@ -86,7 +86,7 @@ This approach uses Clerk's [`pre-built native components`](https://clerk.com/doc
    npx expo install @clerk/expo expo-secure-store expo-auth-session expo-web-browser expo-dev-client
    ```
 
-5. ## Set your Clerk API keys
+5. ## Set your Clerk API keys — Native Components
 
    Add your Clerk Publishable Key to your `.env` file.
    1. In the Clerk Dashboard, navigate to the [**API keys**](https://dashboard.clerk.com/~/api-keys) page.
@@ -111,7 +111,7 @@ This approach uses Clerk's [`pre-built native components`](https://clerk.com/doc
    }
    ```
 
-7. ## Add `<ClerkProvider>` to your root layout
+7. ## Add `<ClerkProvider>` to your root layout — Native Components
 
    The [`<ClerkProvider>`](https://clerk.com/docs/expo/reference/components/clerk-provider.md) component provides session and user context to Clerk's hooks and components. It's recommended to wrap your entire app at the entry point with `<ClerkProvider>` to make authentication globally accessible. See the [`reference docs`](https://clerk.com/docs/expo/reference/components/clerk-provider.md) for other configuration options.
 
@@ -280,7 +280,7 @@ This approach uses Clerk's [`pre-built native components`](https://clerk.com/doc
    });
    ```
 
-9. ## Build and run
+9. ## Build and run — Native Components
 
    This approach requires a [development build](https://docs.expo.dev/develop/development-builds/introduction/) because it uses native modules. It **cannot** run in Expo Go.
 
@@ -301,9 +301,9 @@ This approach uses Clerk's [`pre-built native components`](https://clerk.com/doc
    Then use the terminal shortcuts to run the app on your preferred platform:
    - Press `i` to open the iOS simulator.
    - Press `a` to open the Android emulator.
-   - Scan the QR code with Expo Go to run the app on a physical device.
+   - Use an Expo development client or install a platform-specific development build to run on a physical device.
 
-10. ## Create your first user
+10. ## Create your first user — Native Components
 
     Once the app opens on your device or simulator:
     - Navigate to the Sign up screen.
@@ -339,11 +339,11 @@ This approach uses Clerk's [`pre-built native components`](https://clerk.com/doc
 
 This approach uses custom flows built with React Native components and **works in Expo Go — no dev build required.**
 
-1. ## Enable Native API
+1. ## Enable Native API — JavaScript
 
    In the Clerk Dashboard, navigate to the [**Native applications**](https://dashboard.clerk.com/~/native-applications) page and ensure that the Native API is enabled. This is required to integrate Clerk in your native application.
 
-2. ## Create a new Expo app
+2. ## Create a new Expo app — JavaScript
 
    If you don't already have an Expo app, run the following commands to [create a new one](https://docs.expo.dev/tutorial/create-your-first-app/).
 
@@ -352,7 +352,7 @@ This approach uses custom flows built with React Native components and **works i
    cd clerk-expo
    ```
 
-3. ## Remove default template files
+3. ## Remove default template files — JavaScript
 
    The default Expo template includes files that will conflict with the routes you'll create in this guide. Remove the conflicting files:
 
@@ -374,7 +374,7 @@ This approach uses custom flows built with React Native components and **works i
 
    > You can skip this step if you used `npx create-expo-app@latest --template blank` to create your app. However, the blank template doesn't include [Expo Router](https://docs.expo.dev/router/introduction/) or pre-styled UI components. You'll need to install `expo-router` and its dependencies to follow along with this guide.
 
-4. ## Install dependencies
+4. ## Install dependencies — JavaScript
 
    Install the required packages. Use `npx expo install` to ensure SDK-compatible versions.
    - The [`Clerk Expo SDK`](https://clerk.com/docs/reference/expo/overview.md) gives you access to prebuilt components, hooks, and helpers to make user authentication easier.
@@ -384,7 +384,7 @@ This approach uses custom flows built with React Native components and **works i
    npx expo install @clerk/expo expo-secure-store
    ```
 
-5. ## Set your Clerk API keys
+5. ## Set your Clerk API keys — JavaScript
 
    Add your Clerk Publishable Key to your `.env` file.
    1. In the Clerk Dashboard, navigate to the [**API keys**](https://dashboard.clerk.com/~/api-keys) page.
@@ -397,7 +397,7 @@ This approach uses custom flows built with React Native components and **works i
    EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY={{pub_key}}
    ```
 
-6. ## Add `<ClerkProvider>` to your root layout
+6. ## Add `<ClerkProvider>` to your root layout — JavaScript
 
    The [`<ClerkProvider>`](https://clerk.com/docs/expo/reference/components/clerk-provider.md) component provides session and user context to Clerk's hooks and components. It's recommended to wrap your entire app at the entry point with `<ClerkProvider>` to make authentication globally accessible. See the [`reference docs`](https://clerk.com/docs/expo/reference/components/clerk-provider.md) for other configuration options.
 
@@ -1079,7 +1079,7 @@ This approach uses custom flows built with React Native components and **works i
     });
     ```
 
-12. ## Run your project
+12. ## Run your project — JavaScript
 
     Run your project with the following command:
 
@@ -1090,9 +1090,9 @@ This approach uses custom flows built with React Native components and **works i
     Then use the terminal shortcuts to run the app on your preferred platform:
     - Press `i` to open the iOS simulator.
     - Press `a` to open the Android emulator.
-    - Scan the QR code with Expo Go to run the app on a physical device.
+    - Scan the QR code with Expo Go for this JavaScript-only flow, or use an Expo development client/development build if you add native sign-in modules.
 
-13. ## Create your first user
+13. ## Create your first user — JavaScript
 
     Once the app opens on your device or simulator:
     - Navigate to the Sign up screen.
