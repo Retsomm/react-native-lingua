@@ -1,5 +1,13 @@
 export type LanguageLevel = "beginner" | "elementary" | "intermediate";
 
+export type LanguageFlagKey =
+  | "chinese"
+  | "english"
+  | "french"
+  | "japanese"
+  | "korean"
+  | "spanish";
+
 export type LessonMode = "practice" | "audio" | "ai-teacher" | "chat";
 
 export type ActivityType =
@@ -14,7 +22,8 @@ export type SupportedLanguage = {
   name: string;
   nativeName: string;
   shortName: string;
-  flagUrl: string;
+  flagKey: LanguageFlagKey;
+  learnerCount: string;
   accentColor: string;
   description: string;
   level: LanguageLevel;

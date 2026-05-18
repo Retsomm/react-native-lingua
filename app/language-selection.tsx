@@ -12,22 +12,17 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const learnerCounts: Record<string, string> = {
-  chinese: "7.4M learners",
-  english: "31.2M learners",
-  french: "19.4M learners",
-  japanese: "12.7M learners",
-  korean: "9.3M learners",
-  spanish: "28.4M learners",
-};
-
 export default function LanguageSelectionScreen() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLanguageId, setSelectedLanguageId] = useState(defaultLanguageId);
+  const earthWidth = Math.min(width * 0.95, 520);
+  const earthHeight = earthWidth * (828 / 1127);
 
   const filteredLanguages = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -62,7 +57,7 @@ export default function LanguageSelectionScreen() {
         contentContainerStyle={[
           styles.content,
           {
-            paddingBottom: Math.max(insets.bottom + 18, 24),
+            paddingBottom: 0,
             paddingTop: Math.max(insets.top + 16, 28),
           },
         ]}
@@ -119,7 +114,6 @@ export default function LanguageSelectionScreen() {
               key={language.id}
               isSelected={language.id === selectedLanguageId}
               language={language}
-              learnerCount={learnerCounts[language.id] ?? "New course"}
               onPress={() => setSelectedLanguageId(language.id)}
             />
           ))}
@@ -147,11 +141,14 @@ export default function LanguageSelectionScreen() {
           </Text>
         </Pressable>
 
-        <Image
-          source={images.earth}
-          className="mt-[34px] h-[236px] w-full"
-          resizeMode="contain"
-        />
+        <View style={styles.earthContainer}>
+          <Image
+            source={images.earthCropped}
+            className="self-center"
+            resizeMode="contain"
+            style={{ height: earthHeight, width: earthWidth }}
+          />
+        </View>
       </ScrollView>
     </View>
   );
@@ -160,14 +157,12 @@ export default function LanguageSelectionScreen() {
 type LanguageRowProps = {
   isSelected: boolean;
   language: SupportedLanguage;
-  learnerCount: string;
   onPress: () => void;
 };
 
 function LanguageRow({
   isSelected,
   language,
-  learnerCount,
   onPress,
 }: LanguageRowProps) {
   return (
@@ -184,7 +179,7 @@ function LanguageRow({
     >
       <View className="h-[52px] w-[52px] items-center justify-center overflow-hidden rounded-full border border-[#EEF0F5] bg-white">
         <Image
-          source={{ uri: language.flagUrl }}
+          source={images.flags[language.flagKey]}
           className="h-[52px] w-[52px]"
           resizeMode="cover"
         />
@@ -195,7 +190,7 @@ function LanguageRow({
           {language.name}
         </Text>
         <Text className="mt-[4px] font-poppins text-[17px] leading-[25px] text-[#6E7894]">
-          {learnerCount}
+          {language.learnerCount}
         </Text>
       </View>
 
@@ -222,7 +217,13 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
   },
   content: {
+    flexGrow: 1,
     paddingHorizontal: 37,
+  },
+  earthContainer: {
+    justifyContent: "flex-end",
+    marginTop: "auto",
+    paddingTop: 34,
   },
   languageRow: {
     borderColor: "#F1F2F6",
