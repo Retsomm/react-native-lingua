@@ -1,72 +1,80 @@
+import { useAuth } from "@clerk/expo";
 import { images } from "@/constants/images";
-import { Link } from "expo-router";
+import { Link, Redirect } from "expo-router";
 import { Image, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const mascotWelcome = require("../assets/images/mascot-welcome.png");
-
 export default function OnboardingScreen() {
+  const { isLoaded, isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
+
+  if (!isLoaded) {
+    return null;
+  }
+
+  if (isSignedIn) {
+    return <Redirect href="/" />;
+  }
 
   return (
     <View
       className="flex-1 overflow-hidden bg-white"
       style={{
         paddingBottom: Math.max(insets.bottom, 20) + 12,
-        paddingHorizontal: 45,
+        paddingHorizontal: 32,
         paddingTop: insets.top + 24,
       }}
     >
       <View className="mx-auto w-full max-w-[430px] flex-1">
-        <View className="flex-row items-center justify-center gap-2">
+        <View className="flex-row items-center justify-center gap-[8px]">
           <Image
             source={images.mascotLogo}
             resizeMode="contain"
-            style={{ height: 18, width: 18 }}
+            style={{ height: 24, width: 24 }}
           />
-          <Text className="font-poppins-bold text-[14px] leading-[18px] text-lingua-text-primary">
+          <Text className="font-poppins-bold text-[18px] leading-[24px] text-lingua-text-primary">
             lingua
           </Text>
         </View>
 
         <View className="mt-[42px]">
-          <Text className="font-poppins-bold text-[24px] leading-[31px] text-lingua-text-primary">
+          <Text className="font-poppins-bold text-[31px] leading-[40px] text-lingua-text-primary">
             Your AI language{"\n"}
             <Text className="text-lingua-deep-purple">teacher.</Text>
           </Text>
-          <Text className="mt-[10px] font-poppins text-[11px] leading-[16px] text-[#626b85]">
+          <Text className="mt-[16px] font-poppins text-[19px] leading-[27px] text-[#69728c]">
             Real conversations, personalized lessons, anytime,{"\n"}
             anywhere.
           </Text>
         </View>
 
-        <View className="relative mt-[36px] min-h-[336px] items-center">
-          <Text className="absolute left-[9px] top-[134px] font-poppins-bold text-[9px] leading-[12px] text-lingua-text-primary">
+        <View className="relative mt-[32px] min-h-[360px] items-center">
+          <Text className="absolute left-[10px] top-[142px] font-poppins-bold text-[14px] leading-[18px] text-lingua-text-primary">
             Hello!
           </Text>
-          <Text className="absolute right-[2px] top-[38px] font-poppins-bold text-[10px] leading-[13px] text-lingua-text-primary">
+          <Text className="absolute right-[2px] top-[42px] font-poppins-bold text-[14px] leading-[18px] text-lingua-text-primary">
             ¡Hola!
           </Text>
-          <Text className="absolute right-[5px] top-[240px] font-poppins-bold text-[10px] leading-[13px] text-[#ff6b7a]">
+          <Text className="absolute right-[5px] top-[252px] font-poppins-bold text-[14px] leading-[18px] text-[#ff6b7a]">
             你好!
           </Text>
 
           <Image
-            source={mascotWelcome}
+            source={images.mascotWelcome}
             resizeMode="contain"
-            style={{ height: 245, marginTop: 91, width: 245 }}
+            style={{ height: 284, marginTop: 82, width: 284 }}
           />
         </View>
 
         <View className="flex-1" />
 
         <Link href="/sign-up" asChild>
-          <Pressable className="mt-8 h-[57px] overflow-hidden rounded-[8px] bg-lingua-deep-purple px-8">
+          <Pressable className="mt-8 h-[68px] overflow-hidden rounded-[14px] bg-lingua-deep-purple px-8">
             <View className="h-full flex-row items-center justify-center gap-2">
-              <Text className="font-poppins-bold text-[12px] leading-[16px] text-white">
+              <Text className="font-poppins-bold text-[22px] leading-[29px] text-white">
                 Get Started
               </Text>
-              <Text className="font-poppins text-[24px] leading-[24px] text-white">
+              <Text className="font-poppins text-[32px] leading-[32px] text-white">
                 ›
               </Text>
             </View>
