@@ -1,6 +1,7 @@
+import { useAuth } from "@clerk/expo";
 import { images } from "@/constants/images";
 import { colors, typography } from "@/theme/tokens";
-import { Link } from "expo-router";
+import { Link, Redirect } from "expo-router";
 import type React from "react";
 import {
   Image,
@@ -10,6 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const primaryColors = [
   { name: "Lingua Purple", hex: colors.primary.purple },
@@ -37,8 +39,19 @@ const neutralColors = [
 const typeRows = Object.values(typography.scale);
 
 export default function Index() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
+  const horizontalPadding = isWide ? 28 : 16;
+
+  if (!isLoaded) {
+    return null;
+  }
+
+  if (!isSignedIn) {
+    return <Redirect href="/onboarding" />;
+  }
 
   return (
     <ScrollView
@@ -46,11 +59,21 @@ export default function Index() {
       contentContainerStyle={[
         styles.content,
         isWide ? styles.contentWide : styles.contentNarrow,
+        {
+          paddingBottom: Math.max(insets.bottom + 16, horizontalPadding),
+          paddingTop: Math.max(insets.top + 14, horizontalPadding),
+        },
       ]}
       showsVerticalScrollIndicator={false}
     >
       <View className={isWide ? "flex-row gap-4" : "gap-4"}>
         <View className="gap-4" style={isWide ? styles.column : undefined}>
+          <Link href="/profile" asChild>
+            <Text className="overflow-hidden rounded-[16px] bg-[#f6c443] px-5 py-4 text-center font-poppins-bold text-[18px] leading-[26px] text-lingua-text-primary">
+              Open Profile
+            </Text>
+          </Link>
+
           <Link href="/onboarding" asChild>
             <Text className="overflow-hidden rounded-[16px] bg-lingua-deep-purple px-5 py-4 text-center font-poppins-bold text-[18px] leading-[26px] text-white">
               Open Onboarding

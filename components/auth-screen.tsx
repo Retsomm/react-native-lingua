@@ -1,7 +1,15 @@
 import { images } from "@/constants/images";
-import { AntDesign, FontAwesome, Ionicons } from "@expo/vector-icons";
+import { useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import {
+  AntDesign,
+  FontAwesome,
+  FontAwesome5,
+  Ionicons,
+} from "@expo/vector-icons";
+import * as Linking from "expo-linking";
 import { router } from "expo-router";
-import { useRef, useState } from "react";
+import * as WebBrowser from "expo-web-browser";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -16,6 +24,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type AuthMode = "sign-in" | "sign-up";
+type SocialStrategy =
+  | "oauth_google"
+  | "oauth_line"
+  | "oauth_github"
+  | "oauth_apple";
 
 type AuthScreenProps = {
   mode: AuthMode;
@@ -25,26 +38,252 @@ const socialProviders = [
   {
     icon: <AntDesign name="google" size={28} color="#4285F4" />,
     label: "Continue with Google",
+    strategy: "oauth_google",
   },
   {
-    icon: <FontAwesome name="facebook" size={31} color="#1877F2" />,
-    label: "Continue with Facebook",
+    icon: <FontAwesome5 name="line" size={30} color="#06C755" />,
+    label: "Continue with LINE",
+    strategy: "oauth_line",
+  },
+  {
+    icon: <FontAwesome name="github" size={31} color="#06112B" />,
+    label: "Continue with GitHub",
+    strategy: "oauth_github",
   },
   {
     icon: <FontAwesome name="apple" size={32} color="#06112B" />,
     label: "Continue with Apple",
+    strategy: "oauth_apple",
   },
-];
+] satisfies {
+  icon: ReactNode;
+  label: string;
+  strategy: SocialStrategy;
+}[];
+
+function getPendingSignUpMessage(status: string | null) {
+  if (status === "missing_requirements") {
+    return "Your account needs a little more information before sign up can finish.";
+  }
+
+  return "Sign up is not complete yet. Please finish the required account steps.";
+}
+
+function getPendingSignInMessage(status: string | null) {
+  if (status === "needs_second_factor" || status === "needs_client_trust") {
+    return "This account needs another verification step before sign in can finish.";
+  }
+
+  return "Sign in is not complete yet. Please finish the required account steps.";
+}
+
+function getAuthErrorMessage(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+
+  return "Something went wrong. Please try again.";
+}
 
 export function AuthScreen({ mode }: AuthScreenProps) {
   const insets = useSafeAreaInsets();
+  const { signIn, fetchStatus: signInStatus } = useSignIn();
+  const { signUp, fetchStatus: signUpStatus } = useSignUp();
+  const { startSSOFlow } = useSSO();
+  const [emailAddress, setEmailAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
   const [isVerificationVisible, setVerificationVisible] = useState(false);
+  const [isSocialAuthInProgress, setSocialAuthInProgress] = useState(false);
+  const [isPasswordVisible, setPasswordVisible] = useState(false);
   const isSignUp = mode === "sign-up";
+  const isSubmitting =
+    signInStatus === "fetching" ||
+    signUpStatus === "fetching" ||
+    isSocialAuthInProgress;
+  const redirectUrl = Linking.createURL("oauth-callback");
+
+  const handleEmailAuth = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    const email = emailAddress.trim();
+
+    if (!email) {
+      setAuthError("Enter your email address.");
+      return;
+    }
+
+    if (isSignUp && !password) {
+      setAuthError("Enter a password.");
+      return;
+    }
+
+    setAuthError(null);
+
+    try {
+      if (isSignUp) {
+        const { error } = await signUp.password({
+          emailAddress: email,
+          password,
+        });
+
+        if (error) {
+          setAuthError(error.message);
+          return;
+        }
+
+        const { error: verificationError } =
+          await signUp.verifications.sendEmailCode();
+
+        if (verificationError) {
+          setAuthError(verificationError.message);
+          return;
+        }
+      } else {
+        const { error } = await signIn.emailCode.sendCode({
+          emailAddress: email,
+        });
+
+        if (error) {
+          setAuthError(error.message);
+          return;
+        }
+      }
+
+      setVerificationVisible(true);
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error));
+    }
+  };
+
+  const handleVerifyCode = async (code: string) => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setAuthError(null);
+
+    try {
+      if (isSignUp) {
+        const { error } = await signUp.verifications.verifyEmailCode({ code });
+
+        if (error) {
+          setAuthError(error.message);
+          return;
+        }
+
+        if (signUp.status !== "complete") {
+          setAuthError(getPendingSignUpMessage(signUp.status));
+          return;
+        }
+
+        const { error: finalizeError } = await signUp.finalize({
+          navigate: async () => {
+            router.replace("/");
+          },
+        });
+
+        if (finalizeError) {
+          setAuthError(finalizeError.message);
+          return;
+        }
+      } else {
+        const { error } = await signIn.emailCode.verifyCode({ code });
+
+        if (error) {
+          setAuthError(error.message);
+          return;
+        }
+
+        if (signIn.status !== "complete") {
+          setAuthError(getPendingSignInMessage(signIn.status));
+          return;
+        }
+
+        const { error: finalizeError } = await signIn.finalize({
+          navigate: async () => {
+            router.replace("/");
+          },
+        });
+
+        if (finalizeError) {
+          setAuthError(finalizeError.message);
+          return;
+        }
+      }
+
+      setVerificationVisible(false);
+      router.replace("/");
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error));
+    }
+  };
+
+  const handleSocialAuth = async (strategy: SocialStrategy) => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setSocialAuthInProgress(true);
+    setAuthError(null);
+
+    try {
+      try {
+        await WebBrowser.dismissBrowser();
+      } catch {
+        // No browser session is open. Continue with a new OAuth attempt.
+      }
+
+      const {
+        createdSessionId,
+        setActive,
+        signIn: ssoSignIn,
+        signUp: ssoSignUp,
+      } = await startSSOFlow({
+        redirectUrl,
+        strategy,
+      });
+
+      const sessionId =
+        createdSessionId ??
+        ssoSignIn?.createdSessionId ??
+        ssoSignUp?.createdSessionId;
+
+      if (sessionId) {
+        await setActive?.({ session: sessionId });
+        router.replace("/");
+        return;
+      }
+
+      if (ssoSignIn) {
+        setAuthError(getPendingSignInMessage(ssoSignIn.status));
+        return;
+      }
+
+      if (ssoSignUp) {
+        setAuthError(getPendingSignUpMessage(ssoSignUp.status));
+        return;
+      }
+
+      setAuthError("Social sign in was cancelled or could not be completed.");
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error));
+    } finally {
+      setSocialAuthInProgress(false);
+    }
+  };
 
   return (
     <>
       <ScrollView
-        className="flex-1 bg-white"
+        style={styles.scrollView}
         contentContainerStyle={{
           flexGrow: 1,
           paddingBottom: Math.max(insets.bottom, 28) + 18,
@@ -93,10 +332,14 @@ export function AuthScreen({ mode }: AuthScreenProps) {
               </Text>
               <TextInput
                 autoCapitalize="none"
+                autoCorrect={false}
                 keyboardType="email-address"
+                onChangeText={setEmailAddress}
                 placeholder="alex@gmail.com"
                 placeholderTextColor="#06112B"
-                className="mt-[10px] p-0 font-poppins text-[18px] leading-[24px] text-lingua-text-primary"
+                textContentType="emailAddress"
+                value={emailAddress}
+                style={styles.textInput}
               />
             </View>
 
@@ -107,25 +350,46 @@ export function AuthScreen({ mode }: AuthScreenProps) {
                     Password
                   </Text>
                   <TextInput
-                    secureTextEntry
+                    onChangeText={setPassword}
+                    secureTextEntry={!isPasswordVisible}
                     placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
                     placeholderTextColor="#06112B"
-                    className="mt-[10px] p-0 font-poppins text-[18px] leading-[24px] text-lingua-text-primary"
+                    textContentType="newPassword"
+                    value={password}
+                    style={styles.textInput}
                   />
                 </View>
-                <Ionicons name="eye-outline" size={28} color="#77819b" />
+                <Pressable
+                  accessibilityLabel={
+                    isPasswordVisible ? "Hide password" : "Show password"
+                  }
+                  className="h-[44px] w-[44px] items-end justify-center"
+                  onPress={() => setPasswordVisible((current) => !current)}
+                >
+                  <Ionicons
+                    name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                    size={28}
+                    color="#77819b"
+                  />
+                </Pressable>
               </View>
             ) : null}
           </View>
 
           <Pressable
             className="mt-[25px] h-[68px] items-center justify-center rounded-[14px] bg-lingua-deep-purple"
-            onPress={() => setVerificationVisible(true)}
+            disabled={isSubmitting}
+            onPress={handleEmailAuth}
           >
             <Text className="font-poppins-bold text-[22px] leading-[29px] text-white">
-              {isSignUp ? "Sign Up" : "Sign In"}
+              {isSubmitting ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
             </Text>
           </Pressable>
+          {authError ? (
+            <Text className="mt-[12px] text-center font-poppins text-[14px] leading-[21px] text-[#ff4b4b]">
+              {authError}
+            </Text>
+          ) : null}
 
           <View className="mt-[35px] flex-row items-center gap-[20px]">
             <View className="h-px flex-1 bg-[#e8eaf1]" />
@@ -140,6 +404,8 @@ export function AuthScreen({ mode }: AuthScreenProps) {
               <Pressable
                 key={provider.label}
                 className="h-[64px] flex-row items-center rounded-[16px] border border-[#f0f1f5] bg-white px-[42px]"
+                disabled={isSubmitting}
+                onPress={() => handleSocialAuth(provider.strategy)}
               >
                 <View className="w-[48px] items-start">{provider.icon}</View>
                 <Text className="font-poppins-medium text-[18px] leading-[24px] text-lingua-text-primary">
@@ -167,6 +433,9 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       </ScrollView>
 
       <VerificationModal
+        error={authError}
+        isSubmitting={isSubmitting}
+        onCodeComplete={handleVerifyCode}
         visible={isVerificationVisible}
         onClose={() => setVerificationVisible(false)}
       />
@@ -175,21 +444,35 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 }
 
 type VerificationModalProps = {
+  error: string | null;
+  isSubmitting: boolean;
+  onCodeComplete: (code: string) => Promise<void>;
   onClose: () => void;
   visible: boolean;
 };
 
-function VerificationModal({ onClose, visible }: VerificationModalProps) {
+function VerificationModal({
+  error,
+  isSubmitting,
+  onClose,
+  onCodeComplete,
+  visible,
+}: VerificationModalProps) {
   const [code, setCode] = useState("");
   const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (visible) {
+      setCode("");
+    }
+  }, [visible]);
 
   const handleCodeChange = (value: string) => {
     const nextCode = value.replace(/\D/g, "").slice(0, 6);
     setCode(nextCode);
 
     if (nextCode.length === 6) {
-      onClose();
-      router.replace("/");
+      void onCodeComplete(nextCode);
     }
   };
 
@@ -213,6 +496,11 @@ function VerificationModal({ onClose, visible }: VerificationModalProps) {
           <Text className="mt-[10px] text-center font-poppins text-[15px] leading-[23px] text-[#69728c]">
             We sent you a verification code. Enter the 6 digits below.
           </Text>
+          {error ? (
+            <Text className="mt-[12px] text-center font-poppins text-[14px] leading-[21px] text-[#ff4b4b]">
+              {error}
+            </Text>
+          ) : null}
 
           <Pressable
             className="mt-[26px] flex-row justify-center gap-[10px]"
@@ -236,6 +524,7 @@ function VerificationModal({ onClose, visible }: VerificationModalProps) {
             keyboardType="number-pad"
             maxLength={6}
             onChangeText={handleCodeChange}
+            editable={!isSubmitting}
             textContentType="oneTimeCode"
             value={code}
             style={styles.hiddenCodeInput}
@@ -252,6 +541,18 @@ const styles = StyleSheet.create({
     opacity: 0,
     position: "absolute",
     width: 0,
+  },
+  scrollView: {
+    backgroundColor: "#ffffff",
+    flex: 1,
+  },
+  textInput: {
+    color: "#06112B",
+    fontFamily: "Poppins-Regular",
+    fontSize: 18,
+    lineHeight: 24,
+    marginTop: 10,
+    padding: 0,
   },
   verificationKeyboardView: {
     backgroundColor: "rgba(0, 0, 0, 0.35)",
