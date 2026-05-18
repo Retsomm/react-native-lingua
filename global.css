@@ -1,0 +1,86 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+@theme {
+  --font-poppins: "Poppins-Regular";
+  --font-poppins-medium: "Poppins-Medium";
+  --font-poppins-semibold: "Poppins-SemiBold";
+  --font-poppins-bold: "Poppins-Bold";
+
+  --color-lingua-purple: #6c4ef5;
+  --color-lingua-deep-purple: #5b3bf6;
+  --color-lingua-blue: #4d8bff;
+  --color-lingua-green: #21c16b;
+  --color-lingua-success: #21c16b;
+  --color-lingua-warning: #ffc800;
+  --color-lingua-streak: #ff8a00;
+  --color-lingua-error: #ff4d4f;
+  --color-lingua-info: #4d8bff;
+  --color-lingua-text-primary: #0d132b;
+  --color-lingua-text-secondary: #6b7280;
+  --color-lingua-border: #e5e7eb;
+  --color-lingua-surface: #f6f7fb;
+  --color-lingua-background: #ffffff;
+}
+
+@utility design-system__screen {
+  background-color: var(--color-lingua-background);
+}
+
+@utility design-system__card {
+  background-color: var(--color-lingua-background);
+  border-color: #eef0f5;
+  border-radius: 16px;
+  border-width: 1px;
+}
+
+@utility design-system__rule {
+  background-color: var(--color-lingua-border);
+  height: 1px;
+}
+
+@utility design-system__section-title {
+  color: var(--color-lingua-deep-purple);
+  font-family: var(--font-poppins-bold);
+  font-size: 20px;
+  letter-spacing: 0px;
+  line-height: 26px;
+  text-transform: uppercase;
+}
+
+@utility design-system__kicker {
+  color: #55627a;
+  font-family: var(--font-poppins-semibold);
+  font-size: 13px;
+  letter-spacing: 0px;
+  line-height: 18px;
+  text-transform: uppercase;
+}
+
+@utility design-system__color-label {
+  color: #4e5b74;
+  font-family: var(--font-poppins-semibold);
+  font-size: 12px;
+  letter-spacing: 0px;
+  line-height: 17px;
+  text-transform: uppercase;
+}
+
+@utility design-system__color-value {
+  color: #61708c;
+  font-family: var(--font-poppins);
+  font-size: 13px;
+  letter-spacing: 0px;
+  line-height: 18px;
+}
+
+@utility design-system__type-meta {
+  color: #465474;
+  font-family: var(--font-poppins);
+  font-size: 14px;
+  letter-spacing: 0px;
+  line-height: 22px;
+}
