@@ -8,6 +8,7 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -201,7 +202,7 @@ function VerificationModal({ onClose, visible }: VerificationModalProps) {
     >
       <KeyboardAvoidingView
         behavior={process.env.EXPO_OS === "ios" ? "padding" : "height"}
-        className="flex-1 justify-end bg-black/35"
+        style={styles.verificationKeyboardView}
       >
         <Pressable className="flex-1" onPress={onClose} />
         <View className="rounded-t-[28px] bg-white px-[28px] pb-[34px] pt-[28px]">
@@ -237,10 +238,24 @@ function VerificationModal({ onClose, visible }: VerificationModalProps) {
             onChangeText={handleCodeChange}
             textContentType="oneTimeCode"
             value={code}
-            className="absolute h-0 w-0 opacity-0"
+            style={styles.hiddenCodeInput}
           />
         </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  hiddenCodeInput: {
+    height: 0,
+    opacity: 0,
+    position: "absolute",
+    width: 0,
+  },
+  verificationKeyboardView: {
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+});
