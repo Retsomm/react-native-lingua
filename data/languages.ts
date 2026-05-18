@@ -1,0 +1,66 @@
+import type { SupportedLanguage } from "@/types/learning";
+
+export const languages: SupportedLanguage[] = [
+  {
+    id: "spanish",
+    name: "Spanish",
+    nativeName: "Español",
+    shortName: "ES",
+    flagUrl: "https://flagcdn.com/w160/es.png",
+    accentColor: "#ff6b6b",
+    description: "Start with friendly greetings and simple travel phrases.",
+    level: "beginner",
+  },
+  {
+    id: "french",
+    name: "French",
+    nativeName: "Français",
+    shortName: "FR",
+    flagUrl: "https://flagcdn.com/w160/fr.png",
+    accentColor: "#4d96ff",
+    description: "Learn polite introductions and cafe-ready basics.",
+    level: "beginner",
+  },
+  {
+    id: "japanese",
+    name: "Japanese",
+    nativeName: "日本語",
+    shortName: "JA",
+    flagUrl: "https://flagcdn.com/w160/jp.png",
+    accentColor: "#ff8fab",
+    description: "Practice warm greetings and everyday classroom phrases.",
+    level: "beginner",
+  },
+  {
+    id: "korean",
+    name: "Korean",
+    nativeName: "한국어",
+    shortName: "KO",
+    flagUrl: "https://flagcdn.com/w160/kr.png",
+    accentColor: "#7c3aed",
+    description: "Build confidence with greetings, honorifics, and daily phrases.",
+    level: "beginner",
+  },
+  {
+    id: "chinese",
+    name: "Chinese",
+    nativeName: "中文",
+    shortName: "ZH",
+    flagUrl: "https://flagcdn.com/w160/cn.png",
+    accentColor: "#ef4444",
+    description: "Learn everyday Mandarin phrases with clear pronunciation practice.",
+    level: "beginner",
+  },
+  {
+    id: "english",
+    name: "English",
+    nativeName: "English",
+    shortName: "EN",
+    flagUrl: "https://flagcdn.com/w160/gb.png",
+    accentColor: "#2563eb",
+    description: "Practice useful English for introductions, travel, and study.",
+    level: "beginner",
+  },
+];
+
+export const defaultLanguageId = "spanish";
