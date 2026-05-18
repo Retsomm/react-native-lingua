@@ -1,5 +1,6 @@
 import { images } from "@/constants/images";
 import { defaultLanguageId, languages } from "@/data/languages";
+import { useLanguageStore } from "@/store/UseLanguageStore";
 import type { SupportedLanguage } from "@/types/learning";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -19,8 +20,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function LanguageSelectionScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const persistedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
+  const setSelectedLanguage = useLanguageStore(
+    (state) => state.setSelectedLanguageId,
+  );
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLanguageId, setSelectedLanguageId] = useState(defaultLanguageId);
+  const [selectedLanguageId, setSelectedLanguageId] = useState(
+    persistedLanguageId ?? defaultLanguageId,
+  );
   const earthWidth = Math.min(width * 0.95, 520);
   const earthHeight = earthWidth * (828 / 1127);
 
@@ -50,6 +57,15 @@ export default function LanguageSelectionScreen() {
       languages[0],
     [selectedLanguageId],
   );
+
+  const handleConfirmLanguage = () => {
+    if (!selectedLanguage) {
+      return;
+    }
+
+    setSelectedLanguage(selectedLanguage.id);
+    router.replace("/");
+  };
 
   return (
     <View className="flex-1 bg-white">
@@ -133,6 +149,8 @@ export default function LanguageSelectionScreen() {
         <Pressable
           accessibilityLabel={`Confirm ${selectedLanguage.name}`}
           className="mt-[24px] flex-row items-center justify-center gap-[12px] rounded-[26px] bg-lingua-deep-purple px-[22px] py-[18px]"
+          disabled={!selectedLanguage}
+          onPress={handleConfirmLanguage}
           style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}
         >
           <Ionicons name="checkmark-circle" size={26} color="#FFFFFF" />

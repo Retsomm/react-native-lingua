@@ -2,7 +2,7 @@ import mascotLogo from "../assets/images/mascot-logo.png";
 import mascotAuth from "../assets/images/mascot-auth.png";
 import mascotWelcome from "../assets/images/mascot-welcome.png";
 import earth from "../assets/images/earth.png";
-import earthCropped from "../assets/images/earth-cropped.png";
+import earthCropped from "../assets/images/EarthCropped.png";
 import chineseFlag from "../assets/images/flags/chinese.png";
 import englishFlag from "../assets/images/flags/english.png";
 import frenchFlag from "../assets/images/flags/french.png";
