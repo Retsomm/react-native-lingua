@@ -1,5 +1,6 @@
 import { images } from "@/constants/images";
 import { colors, typography } from "@/theme/tokens";
+import { Link } from "expo-router";
 import type React from "react";
 import {
   Image,
@@ -11,26 +12,26 @@ import {
 } from "react-native";
 
 const primaryColors = [
-  { name: "Lingua Purple", value: colors.primary.purple },
-  { name: "Lingua Deep Purple", value: colors.primary.deepPurple },
-  { name: "Lingua Blue", value: colors.primary.blue },
-  { name: "Lingua Green", value: colors.primary.green },
+  { name: "Lingua Purple", hex: colors.primary.purple },
+  { name: "Lingua Deep Purple", hex: colors.primary.deepPurple },
+  { name: "Lingua Blue", hex: colors.primary.blue },
+  { name: "Lingua Green", hex: colors.primary.green },
 ] as const;
 
 const semanticColors = [
-  { name: "Success", value: colors.semantic.success },
-  { name: "Warning", value: colors.semantic.warning },
-  { name: "Streak", value: colors.semantic.streak },
-  { name: "Error", value: colors.semantic.error },
-  { name: "Info", value: colors.semantic.info },
+  { name: "Success", hex: colors.semantic.success },
+  { name: "Warning", hex: colors.semantic.warning },
+  { name: "Streak", hex: colors.semantic.streak },
+  { name: "Error", hex: colors.semantic.error },
+  { name: "Info", hex: colors.semantic.info },
 ] as const;
 
 const neutralColors = [
-  { name: "Text / Primary", value: colors.neutral.textPrimary },
-  { name: "Text / Secondary", value: colors.neutral.textSecondary },
-  { name: "Border", value: colors.neutral.border },
-  { name: "Surface", value: colors.neutral.surface },
-  { name: "Background", value: colors.neutral.background },
+  { name: "Text / Primary", hex: colors.neutral.textPrimary },
+  { name: "Text / Secondary", hex: colors.neutral.textSecondary },
+  { name: "Border", hex: colors.neutral.border },
+  { name: "Surface", hex: colors.neutral.surface },
+  { name: "Background", hex: colors.neutral.background },
 ] as const;
 
 const typeRows = Object.values(typography.scale);
@@ -50,6 +51,12 @@ export default function Index() {
     >
       <View className={isWide ? "flex-row gap-4" : "gap-4"}>
         <View className="gap-4" style={isWide ? styles.column : undefined}>
+          <Link href="/onboarding" asChild>
+            <Text className="overflow-hidden rounded-[16px] bg-lingua-deep-purple px-5 py-4 text-center font-poppins-bold text-[18px] leading-[26px] text-white">
+              Open Onboarding
+            </Text>
+          </Link>
+
           <DesignCard title="Brand">
             <View className="min-h-37.5 flex-row items-center justify-center gap-6.5">
               <Image
@@ -120,8 +127,8 @@ function DesignCard({ children, fill, title }: DesignCardProps) {
 }
 
 type ColorItem = {
+  hex: string;
   name: string;
-  value: string;
 };
 
 type ColorGroupProps = {
@@ -153,13 +160,13 @@ function ColorGroup({ items, outlinedLast, size, title }: ColorGroupProps) {
                 className={
                   isOutlined ? "border border-lingua-border" : undefined
                 }
-                style={[swatchStyle, { backgroundColor: item.value }]}
+                style={[swatchStyle, { backgroundColor: item.hex }]}
               />
               <Text className="design-system__color-label mt-[10px]">
                 {item.name}
               </Text>
               <Text className="design-system__color-value mt-[2px]">
-                {item.value}
+                {item.hex}
               </Text>
             </View>
           );
