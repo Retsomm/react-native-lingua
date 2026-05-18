@@ -80,6 +80,12 @@ export default function Index() {
             </Text>
           </Link>
 
+          <Link href="/language-selection" asChild>
+            <Text className="overflow-hidden rounded-[16px] bg-lingua-blue px-5 py-4 text-center font-poppins-bold text-[18px] leading-[26px] text-white">
+              Choose Language
+            </Text>
+          </Link>
+
           <DesignCard title="Brand">
             <View className="min-h-37.5 flex-row items-center justify-center gap-6.5">
               <Image
