@@ -1,6 +1,6 @@
 import { images } from "@/constants/images";
 import { Link } from "expo-router";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const mascotWelcome = require("../assets/images/mascot-welcome.png");
@@ -9,18 +9,15 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView
-      className="flex-1 bg-white"
-      contentContainerStyle={{
-        flexGrow: 1,
+    <View
+      className="flex-1 overflow-hidden bg-white"
+      style={{
         paddingBottom: Math.max(insets.bottom, 20) + 12,
         paddingHorizontal: 45,
         paddingTop: insets.top + 24,
       }}
-      contentInsetAdjustmentBehavior="automatic"
-      showsVerticalScrollIndicator={false}
     >
-      <View className="mx-auto min-h-full w-full max-w-[430px] flex-1">
+      <View className="mx-auto w-full max-w-[430px] flex-1">
         <View className="flex-row items-center justify-center gap-2">
           <Image
             source={images.mascotLogo}
@@ -63,7 +60,7 @@ export default function OnboardingScreen() {
 
         <View className="flex-1" />
 
-        <Link href="/" asChild>
+        <Link href="/sign-up" asChild>
           <Pressable className="mt-8 h-[57px] overflow-hidden rounded-[8px] bg-lingua-deep-purple px-8">
             <View className="h-full flex-row items-center justify-center gap-2">
               <Text className="font-poppins-bold text-[12px] leading-[16px] text-white">
@@ -76,6 +73,6 @@ export default function OnboardingScreen() {
           </Pressable>
         </Link>
       </View>
-    </ScrollView>
+    </View>
   );
 }
