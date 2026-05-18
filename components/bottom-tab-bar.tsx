@@ -73,9 +73,12 @@ export function BottomTabBar({
       >
         {barWidth > 0 ? (
           <Animated.View
-            className="absolute top-[10px] h-[54px] w-[54px] items-center justify-center rounded-full bg-lingua-deep-purple"
             pointerEvents="none"
-            style={[styles.activeCircle, { transform: [{ translateX: indicatorX }] }]}
+            style={[
+              styles.activeCircleContainer,
+              styles.activeCircle,
+              { transform: [{ translateX: indicatorX }] },
+            ]}
           >
             <Ionicons
               name={tabIcons[state.routes[state.index].name] ?? "ellipse"}
@@ -132,6 +135,16 @@ export function BottomTabBar({
 }
 
 const styles = StyleSheet.create({
+  activeCircleContainer: {
+    alignItems: "center",
+    backgroundColor: "#5b3bf6",
+    borderRadius: ACTIVE_SIZE / 2,
+    height: ACTIVE_SIZE,
+    justifyContent: "center",
+    position: "absolute",
+    top: 10,
+    width: ACTIVE_SIZE,
+  },
   activeCircle: {
     left: 0,
     zIndex: 1,
