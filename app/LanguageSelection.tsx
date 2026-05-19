@@ -60,12 +60,15 @@ export default function LanguageSelectionScreen() {
     [selectedLanguageId],
   );
 
-  const handleConfirmLanguage = () => {
+  const handleConfirmLanguage = async () => {
     if (!selectedLanguage) {
       return;
     }
 
-    posthog.capture("language_confirmed", { language: selectedLanguage.id });
+    posthog.capture("language_confirmed", { languageId: selectedLanguage.id });
+    await posthog.flush().catch((flushError) => {
+      console.error("Failed to flush language confirmation event", flushError);
+    });
     setSelectedLanguage(selectedLanguage.id);
     router.replace("/");
   };
@@ -134,7 +137,7 @@ export default function LanguageSelectionScreen() {
               isSelected={language.id === selectedLanguageId}
               language={language}
               onPress={() => {
-                posthog.capture("language_selected", { language: language.id });
+                posthog.capture("language_selected", { languageId: language.id });
                 setSelectedLanguageId(language.id);
               }}
             />

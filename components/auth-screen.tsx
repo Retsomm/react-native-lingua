@@ -91,6 +91,31 @@ function getAuthErrorMessage(error: unknown) {
   return "Something went wrong. Please try again.";
 }
 
+function getStableUserId(resource: unknown) {
+  if (!resource || typeof resource !== "object") {
+    return undefined;
+  }
+
+  if (
+    "createdUserId" in resource &&
+    typeof resource.createdUserId === "string"
+  ) {
+    return resource.createdUserId;
+  }
+
+  if (
+    "user" in resource &&
+    resource.user &&
+    typeof resource.user === "object" &&
+    "id" in resource.user &&
+    typeof resource.user.id === "string"
+  ) {
+    return resource.user.id;
+  }
+
+  return undefined;
+}
+
 export function AuthScreen({ mode }: AuthScreenProps) {
   const insets = useSafeAreaInsets();
   const { signIn, fetchStatus: signInStatus } = useSignIn();
@@ -167,16 +192,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       setVerificationVisible(true);
     } catch (error) {
-      posthog.capture("$exception", {
-        $exception_list: [
-          {
-            type: error instanceof Error ? error.name : "Error",
-            value: getAuthErrorMessage(error),
-          },
-        ],
-        $exception_source: "auth-screen",
-        auth_mode: mode,
-      });
+      posthog.captureException(error, { auth_mode: mode });
       setAuthError(getAuthErrorMessage(error));
     }
   };
@@ -216,7 +232,6 @@ export function AuthScreen({ mode }: AuthScreenProps) {
         const userId = signUp.createdUserId;
         if (userId) {
           posthog.identify(userId, {
-            $set: { email: signUp.emailAddress },
             $set_once: { sign_up_date: new Date().toISOString() },
           });
         }
@@ -245,11 +260,9 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           return;
         }
 
-        const userId = signIn.createdSessionId;
+        const userId = getStableUserId(signIn);
         if (userId) {
-          posthog.identify(userId, {
-            $set: { email: signIn.identifier },
-          });
+          posthog.identify(userId);
         }
         posthog.capture("sign_in_completed");
       }
@@ -257,16 +270,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       setVerificationVisible(false);
       router.replace("/");
     } catch (error) {
-      posthog.capture("$exception", {
-        $exception_list: [
-          {
-            type: error instanceof Error ? error.name : "Error",
-            value: getAuthErrorMessage(error),
-          },
-        ],
-        $exception_source: "auth-screen-verify",
-        auth_mode: mode,
-      });
+      posthog.captureException(error, { auth_mode: mode });
       setAuthError(getAuthErrorMessage(error));
     }
   };
@@ -322,17 +326,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       setAuthError("Social sign in was cancelled or could not be completed.");
     } catch (error) {
-      posthog.capture("$exception", {
-        $exception_list: [
-          {
-            type: error instanceof Error ? error.name : "Error",
-            value: getAuthErrorMessage(error),
-          },
-        ],
-        $exception_source: "auth-screen-social",
-        strategy,
-        auth_mode: mode,
-      });
+      posthog.captureException(error, { strategy, auth_mode: mode });
       setAuthError(getAuthErrorMessage(error));
     } finally {
       setSocialAuthInProgress(false);

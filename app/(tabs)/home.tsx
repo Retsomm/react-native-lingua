@@ -135,7 +135,7 @@ export default function HomeScreen() {
             style={({ pressed }) => [styles.continueButton, pressed && styles.pressed]}
             onPress={() =>
               posthog.capture("continue_learning_tapped", {
-                language: selectedLanguage.id,
+                languageId: selectedLanguage.id,
                 unit: currentUnit?.order ?? 1,
               })
             }

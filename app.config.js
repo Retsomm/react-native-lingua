@@ -47,7 +47,8 @@ export default {
       reactCompiler: true,
     },
     extra: {
-      posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
+      posthogProjectToken:
+        process.env.POSTHOG_API_KEY ?? process.env.POSTHOG_PROJECT_TOKEN,
       posthogHost: process.env.POSTHOG_HOST,
     },
   },

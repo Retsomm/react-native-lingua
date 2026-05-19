@@ -19,6 +19,20 @@ if (!clerkPublishableKey) {
   throw new Error("Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to your .env file");
 }
 
+const sensitiveParamPattern = /(token|auth|email|id|session|secret|password|code)/i;
+
+function getSafeSearchParams(params: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(params).filter(([key, value]) => {
+      if (sensitiveParamPattern.test(key)) {
+        return false;
+      }
+
+      return typeof value === "string" || Array.isArray(value);
+    }),
+  );
+}
+
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     "Poppins-Regular": require("./assets/fonts/Poppins-Regular.ttf"),
@@ -34,9 +48,11 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (previousPathname.current !== pathname) {
+      const safeParams = getSafeSearchParams(params);
+
       posthog.screen(pathname, {
         previous_screen: previousPathname.current ?? null,
-        ...params,
+        ...safeParams,
       });
       previousPathname.current = pathname;
     }
@@ -49,7 +65,9 @@ export default function RootLayout() {
 
     didCaptureAppOpened.current = true;
     posthog.capture("app_opened");
-    void posthog.flush();
+    posthog.flush().catch((flushError) => {
+      console.error("Failed to flush app_opened analytics event", flushError);
+    });
   }, [error, loaded]);
 
   useEffect(() => {

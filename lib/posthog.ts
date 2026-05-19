@@ -1,11 +1,20 @@
 import PostHog from "posthog-react-native";
 import Constants from "expo-constants";
 
-const apiKey = Constants.expoConfig?.extra?.posthogProjectToken as string | undefined;
-const host = Constants.expoConfig?.extra?.posthogHost as string | undefined;
-const isPostHogConfigured = Boolean(apiKey && apiKey !== "phc_your_project_token_here");
+const apiKeyRaw = Constants.expoConfig?.extra?.posthogProjectToken;
+const hostRaw = Constants.expoConfig?.extra?.posthogHost;
 
-export const posthog = new PostHog(apiKey || "placeholder_key", {
+const apiKey =
+  typeof apiKeyRaw === "string" && apiKeyRaw.trim() !== ""
+    ? apiKeyRaw.trim()
+    : undefined;
+const host =
+  typeof hostRaw === "string" && hostRaw.trim() !== "" ? hostRaw.trim() : undefined;
+const isPostHogConfigured = Boolean(
+  apiKey && apiKey !== "phc_your_project_token_here",
+);
+
+export const posthog = new PostHog(apiKey ?? "", {
   host,
   disabled: !isPostHogConfigured,
   captureAppLifecycleEvents: true,

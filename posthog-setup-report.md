@@ -11,8 +11,21 @@ The wizard has completed a deep integration of PostHog analytics into the Lingua
 - **`app/LanguageSelection.tsx`** — Tracks `language_selected` when a user taps a language row, and `language_confirmed` when they confirm their choice.
 - **`app/(tabs)/home.tsx`** — Tracks `continue_learning_tapped` with `language` and `unit` properties.
 
+## Environment variables
+
+Set these values from your PostHog project settings before running the app. In PostHog, open your project dashboard and go to Project > Setup to find the API key/project token and host.
+
+```bash
+POSTHOG_API_KEY=phc_your_project_token_here
+POSTHOG_HOST=https://us.i.posthog.com
+```
+
+You can export them in your shell, place them in `.env`, or store them as CI secrets. `app.config.js` reads `process.env.POSTHOG_API_KEY` into `extra.posthogProjectToken` and `process.env.POSTHOG_HOST` into `extra.posthogHost`, and `lib/posthog.ts` reads those values with `Constants.expoConfig?.extra`. Restart the Expo dev server after changing environment variables.
+
 | Event | Description | File |
 |---|---|---|
+| `app_opened` | App finishes loading and the root layout captures an app-open lifecycle event | `app/_layout.tsx` |
+| `$screen` | Manual screen tracking emits when the Expo Router pathname changes via `usePathname` | `app/_layout.tsx` |
 | `sign_up_submitted` | User submits the email/password sign-up form | `components/auth-screen.tsx` |
 | `sign_up_completed` | User successfully completes sign-up and email verification | `components/auth-screen.tsx` |
 | `sign_in_submitted` | User submits the email sign-in form | `components/auth-screen.tsx` |
@@ -28,12 +41,12 @@ The wizard has completed a deep integration of PostHog analytics into the Lingua
 
 We've built some insights and a dashboard for you to keep an eye on user behavior, based on the events we just instrumented:
 
-- [Analytics basics dashboard](/dashboard/1601544)
-- [Sign-up Funnel](/insights/x4do4BVS) — Conversion from Get Started → sign-up submitted → sign-up completed
-- [Sign-in Funnel](/insights/q2Hw0vtF) — Conversion from sign-in submitted to sign-in completed
-- [Language Selections Over Time](/insights/kMwR68iV) — Daily unique users confirming a language
-- [Social Auth Conversion](/insights/2RebTAJI) — Social auth started vs completed (OAuth drop-off)
-- [Continue Learning Engagement](/insights/pHLgBnMu) — Daily unique users tapping Continue on the home screen
+- [Analytics basics dashboard](https://app.posthog.com/project/YOUR_PROJECT_ID/dashboard/1601544)
+- [Sign-up Funnel](https://app.posthog.com/project/YOUR_PROJECT_ID/insights/x4do4BVS) — Conversion from Get Started → sign-up submitted → sign-up completed
+- [Sign-in Funnel](https://app.posthog.com/project/YOUR_PROJECT_ID/insights/q2Hw0vtF) — Conversion from sign-in submitted to sign-in completed
+- [Language Selections Over Time](https://app.posthog.com/project/YOUR_PROJECT_ID/insights/kMwR68iV) — Daily unique users confirming a language
+- [Social Auth Conversion](https://app.posthog.com/project/YOUR_PROJECT_ID/insights/2RebTAJI) — Social auth started vs completed (OAuth drop-off)
+- [Continue Learning Engagement](https://app.posthog.com/project/YOUR_PROJECT_ID/insights/pHLgBnMu) — Daily unique users tapping Continue on the home screen
 
 ### Agent skill
 
