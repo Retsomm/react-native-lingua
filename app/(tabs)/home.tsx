@@ -189,13 +189,13 @@ function PlanRow({
   title,
   variant = "purple",
 }: PlanRowProps) {
-  const iconBackground = variant === "coral" ? "bg-[#FF515B]" : "bg-lingua-deep-purple";
+  const iconBackgroundColor = variant === "coral" ? "#FF515B" : "#2F2064";
 
   return (
     <View className="flex-row items-center">
       <View
-        className={`h-[52px] w-[52px] items-center justify-center rounded-[11px] ${iconBackground}`}
-        style={styles.planIcon}
+        className="h-[52px] w-[52px] items-center justify-center rounded-[11px]"
+        style={[styles.planIcon, { backgroundColor: iconBackgroundColor }]}
       >
         <Ionicons name={iconName} size={29} color="#FFFFFF" />
       </View>
