@@ -31,9 +31,9 @@ const sessionControls: {
 ];
 
 const feedbackMetrics = [
-  { label: "Speaking", value: "Excellent", valueClassName: "text-[#19D229]" },
-  { label: "Pronunciation", value: "Great", valueClassName: "text-[#2085FF]" },
-  { label: "Grammar", value: "Good", valueClassName: "text-[#5034FF]" },
+  { color: "#19D229", label: "Speaking", value: "Excellent" },
+  { color: "#2085FF", label: "Pronunciation", value: "Great" },
+  { color: "#5034FF", label: "Grammar", value: "Good" },
 ];
 
 const tabItems: { iconName: IoniconName; label: string; route: Href }[] = [
@@ -126,13 +126,23 @@ export function AudioTeacherSession({
             </View>
           </View>
 
-          <HeaderAction iconName="videocam" />
+          <HeaderAction
+            accessibilityLabel="Camera unavailable"
+            disabled
+            iconName="videocam"
+            testID="audio-teacher-header-camera"
+          />
           <View className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-[#ECEEF7] bg-white">
             <Text className="font-poppins-semibold text-[21px] leading-[28px] text-lingua-text-primary">
               {lesson.estimatedMinutes + lesson.xpReward - 3}
             </Text>
           </View>
-          <HeaderAction iconName="notifications-outline" />
+          <HeaderAction
+            accessibilityLabel="Notifications unavailable"
+            disabled
+            iconName="notifications-outline"
+            testID="audio-teacher-header-notifications"
+          />
         </View>
 
         <ImageBackground
@@ -179,14 +189,16 @@ export function AudioTeacherSession({
           {feedbackMetrics.map((metric, index) => (
             <View
               key={metric.label}
-              className={`flex-row items-center justify-between ${
-                index > 0 ? "border-t border-[#ECEEF7] pt-[16px]" : ""
-              }`}
+              className="flex-row items-center justify-between"
+              style={index > 0 ? styles.feedbackMetricDivider : undefined}
             >
               <Text className="font-poppins-semibold text-[17px] leading-[24px] text-lingua-text-primary">
                 {metric.label}
               </Text>
-              <Text className={`font-poppins-semibold text-[18px] leading-[25px] ${metric.valueClassName}`}>
+              <Text
+                className="font-poppins-semibold text-[18px] leading-[25px]"
+                style={{ color: metric.color }}
+              >
                 {metric.value}
               </Text>
             </View>
@@ -229,15 +241,43 @@ export function AudioTeacherSession({
 }
 
 type HeaderActionProps = {
+  accessibilityLabel: string;
+  disabled?: boolean;
   iconName: IoniconName;
+  onPress?: () => void;
+  testID: string;
 };
 
-function HeaderAction({ iconName }: HeaderActionProps) {
+function HeaderAction({
+  accessibilityLabel,
+  disabled = false,
+  iconName,
+  onPress,
+  testID,
+}: HeaderActionProps) {
+  if (disabled || !onPress) {
+    return (
+      <View
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: true }}
+        className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-[#ECEEF7] bg-white"
+        style={[styles.headerAction, styles.disabledHeaderAction]}
+        testID={testID}
+      >
+        <Ionicons name={iconName} size={27} color="#0D132B" />
+      </View>
+    );
+  }
+
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-[#ECEEF7] bg-white"
+      onPress={onPress}
       style={({ pressed }) => [styles.headerAction, pressed && styles.pressed]}
+      testID={testID}
     >
       <Ionicons name={iconName} size={27} color="#0D132B" />
     </Pressable>
@@ -344,6 +384,14 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 8, width: 0 },
     shadowOpacity: 0.06,
     shadowRadius: 18,
+  },
+  feedbackMetricDivider: {
+    borderTopColor: "#ECEEF7",
+    borderTopWidth: 1,
+    paddingTop: 16,
+  },
+  disabledHeaderAction: {
+    opacity: 0.55,
   },
   headerAction: {
     shadowColor: "#0D132B",

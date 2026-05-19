@@ -22,6 +22,23 @@ type StarterLessonSeed = {
   };
 };
 
+type LessonRow = [
+  title: string,
+  description: string,
+  term1: string,
+  translation1: string,
+  pronunciation1: string,
+  example1: string,
+  term2: string,
+  translation2: string,
+  pronunciation2: string,
+  example2: string,
+  phrase: string,
+  phraseTranslation: string,
+  phrasePronunciation: string,
+  phraseContext: string,
+];
+
 function createStarterLesson(seed: StarterLessonSeed): Lesson {
   const primaryVocabulary = seed.vocabulary[0];
   const secondaryVocabulary = seed.vocabulary[1] ?? seed.vocabulary[0];
@@ -669,37 +686,54 @@ function getAdditionalStarterLessons() {
 function createLanguageStarterSet(
   languageId: string,
   unitId: string,
-  rows: string[][],
+  rows: LessonRow[],
 ) {
-  return rows.map((row, index) =>
-    createStarterLesson({
-      id: `${languageId}-${row[0].toLowerCase().replaceAll(" & ", "-").replaceAll(" ", "-")}`,
+  return rows.map((row, index) => {
+    const [
+      title,
+      description,
+      term1,
+      translation1,
+      pronunciation1,
+      example1,
+      term2,
+      translation2,
+      pronunciation2,
+      example2,
+      phrase,
+      phraseTranslation,
+      phrasePronunciation,
+      phraseContext,
+    ] = row;
+
+    return createStarterLesson({
+      id: `${languageId}-${title.toLowerCase().replaceAll(" & ", "-").replaceAll(" ", "-")}`,
       languageId,
       unitId,
-      title: row[0],
-      description: row[1],
+      title,
+      description,
       mode: index === 2 ? "audio" : index === 4 ? "chat" : "practice",
       order: index + 1,
       vocabulary: [
         {
-          term: row[2],
-          translation: row[3],
-          pronunciation: row[4],
-          example: row[5],
+          term: term1,
+          translation: translation1,
+          pronunciation: pronunciation1,
+          example: example1,
         },
         {
-          term: row[6],
-          translation: row[7],
-          pronunciation: row[8],
-          example: row[9],
+          term: term2,
+          translation: translation2,
+          pronunciation: pronunciation2,
+          example: example2,
         },
       ],
       phrase: {
-        phrase: row[10],
-        translation: row[11],
-        pronunciation: row[12],
-        context: row[13],
+        phrase,
+        translation: phraseTranslation,
+        pronunciation: phrasePronunciation,
+        context: phraseContext,
       },
-    }),
-  );
+    });
+  });
 }

@@ -36,9 +36,7 @@ export const images = {
   teacherPortrait: mascotAuth,
   treasure,
   lessonArt: {
-    cafe: {
-      uri: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=900&auto=format&fit=crop",
-    },
+    cafe: lessonCafeScene,
     cafeScene: lessonCafeScene,
     completed: mascotLogo,
     homeBackground: lessonHomeBackground,
