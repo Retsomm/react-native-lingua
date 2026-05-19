@@ -1,5 +1,5 @@
 import { images } from "@/constants/images";
-import { useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import { useAuth, useSignIn, useSignUp, useSSO } from "@clerk/expo";
 import {
   AntDesign,
   FontAwesome,
@@ -121,6 +121,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
   const { signIn, fetchStatus: signInStatus } = useSignIn();
   const { signUp, fetchStatus: signUpStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
+  const { userId } = useAuth();
   const posthog = usePostHog();
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
@@ -309,6 +310,9 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       if (sessionId) {
         await setActive?.({ session: sessionId });
+        if (userId) {
+          posthog.identify(userId);
+        }
         posthog.capture("social_auth_completed", { strategy, auth_mode: mode });
         router.replace("/");
         return;
