@@ -3,6 +3,9 @@ import mascotAuth from "../assets/images/mascot-auth.png";
 import mascotWelcome from "../assets/images/mascot-welcome.png";
 import earth from "../assets/images/earth.png";
 import earthCropped from "../assets/images/EarthCropped.png";
+import palace from "../assets/images/palace.png";
+import streakFire from "../assets/images/streak-fire.png";
+import treasure from "../assets/images/treasure.png";
 import chineseFlag from "../assets/images/flags/chinese.png";
 import englishFlag from "../assets/images/flags/english.png";
 import frenchFlag from "../assets/images/flags/french.png";
@@ -24,4 +27,8 @@ export const images = {
   mascotAuth,
   mascotLogo,
   mascotWelcome,
+  palace,
+  streakFire,
+  teacherPortrait: mascotAuth,
+  treasure,
 };
