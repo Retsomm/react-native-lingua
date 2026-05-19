@@ -3,10 +3,12 @@ import { images } from "@/constants/images";
 import { Link, Redirect } from "expo-router";
 import { Image, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { usePostHog } from "posthog-react-native";
 
 export default function OnboardingScreen() {
   const { isLoaded, isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
+  const posthog = usePostHog();
 
   if (!isLoaded) {
     return null;
@@ -69,7 +71,10 @@ export default function OnboardingScreen() {
         <View className="flex-1" />
 
         <Link href="/sign-up" asChild>
-          <Pressable className="mt-8 h-[68px] overflow-hidden rounded-[14px] bg-lingua-deep-purple px-8">
+          <Pressable
+            className="mt-8 h-[68px] overflow-hidden rounded-[14px] bg-lingua-deep-purple px-8"
+            onPress={() => posthog.capture("onboarding_get_started_tapped")}
+          >
             <View className="h-full flex-row items-center justify-center gap-2">
               <Text className="font-poppins-bold text-[22px] leading-[29px] text-white">
                 Get Started

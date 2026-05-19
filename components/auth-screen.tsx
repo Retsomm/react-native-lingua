@@ -22,6 +22,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { usePostHog } from "posthog-react-native";
 
 type AuthMode = "sign-in" | "sign-up";
 type SocialStrategy =
@@ -95,6 +96,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
   const { signIn, fetchStatus: signInStatus } = useSignIn();
   const { signUp, fetchStatus: signUpStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
+  const posthog = usePostHog();
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
@@ -126,6 +128,12 @@ export function AuthScreen({ mode }: AuthScreenProps) {
     }
 
     setAuthError(null);
+
+    if (isSignUp) {
+      posthog.capture("sign_up_submitted");
+    } else {
+      posthog.capture("sign_in_submitted");
+    }
 
     try {
       if (isSignUp) {
@@ -159,6 +167,16 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       setVerificationVisible(true);
     } catch (error) {
+      posthog.capture("$exception", {
+        $exception_list: [
+          {
+            type: error instanceof Error ? error.name : "Error",
+            value: getAuthErrorMessage(error),
+          },
+        ],
+        $exception_source: "auth-screen",
+        auth_mode: mode,
+      });
       setAuthError(getAuthErrorMessage(error));
     }
   };
@@ -194,6 +212,15 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           setAuthError(finalizeError.message);
           return;
         }
+
+        const userId = signUp.createdUserId;
+        if (userId) {
+          posthog.identify(userId, {
+            $set: { email: signUp.emailAddress },
+            $set_once: { sign_up_date: new Date().toISOString() },
+          });
+        }
+        posthog.capture("sign_up_completed");
       } else {
         const { error } = await signIn.emailCode.verifyCode({ code });
 
@@ -217,11 +244,29 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           setAuthError(finalizeError.message);
           return;
         }
+
+        const userId = signIn.createdSessionId;
+        if (userId) {
+          posthog.identify(userId, {
+            $set: { email: signIn.identifier },
+          });
+        }
+        posthog.capture("sign_in_completed");
       }
 
       setVerificationVisible(false);
       router.replace("/");
     } catch (error) {
+      posthog.capture("$exception", {
+        $exception_list: [
+          {
+            type: error instanceof Error ? error.name : "Error",
+            value: getAuthErrorMessage(error),
+          },
+        ],
+        $exception_source: "auth-screen-verify",
+        auth_mode: mode,
+      });
       setAuthError(getAuthErrorMessage(error));
     }
   };
@@ -233,6 +278,8 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
     setSocialAuthInProgress(true);
     setAuthError(null);
+
+    posthog.capture("social_auth_started", { strategy, auth_mode: mode });
 
     try {
       try {
@@ -258,6 +305,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       if (sessionId) {
         await setActive?.({ session: sessionId });
+        posthog.capture("social_auth_completed", { strategy, auth_mode: mode });
         router.replace("/");
         return;
       }
@@ -274,6 +322,17 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       setAuthError("Social sign in was cancelled or could not be completed.");
     } catch (error) {
+      posthog.capture("$exception", {
+        $exception_list: [
+          {
+            type: error instanceof Error ? error.name : "Error",
+            value: getAuthErrorMessage(error),
+          },
+        ],
+        $exception_source: "auth-screen-social",
+        strategy,
+        auth_mode: mode,
+      });
       setAuthError(getAuthErrorMessage(error));
     } finally {
       setSocialAuthInProgress(false);

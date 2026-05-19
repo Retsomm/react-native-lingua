@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useUser } from "@clerk/expo";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { usePostHog } from "posthog-react-native";
 
 const DAILY_GOAL_XP = 20;
 const PREVIEW_EARNED_XP = 15;
@@ -14,6 +15,7 @@ const PREVIEW_EARNED_XP = 15;
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useUser();
+  const posthog = usePostHog();
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
 
   const selectedLanguage =
@@ -131,6 +133,12 @@ export default function HomeScreen() {
             accessibilityRole="button"
             className="mt-[18px] h-[49px] w-[126px] items-center justify-center rounded-[15px] bg-white"
             style={({ pressed }) => [styles.continueButton, pressed && styles.pressed]}
+            onPress={() =>
+              posthog.capture("continue_learning_tapped", {
+                language: selectedLanguage.id,
+                unit: currentUnit?.order ?? 1,
+              })
+            }
           >
             <Text className="font-poppins-bold text-[18px] leading-[25px] text-lingua-deep-purple">
               Continue
