@@ -180,6 +180,14 @@ export function useStreamAudioCall({
         image: data.user.image ?? undefined,
         name: data.user.name,
       };
+      const currentAgentSession = agentSessionRef.current;
+
+      if (currentAgentSession) {
+        await stopAgentSession(currentAgentSession).catch(() => undefined);
+        agentSessionRef.current = null;
+        setAgentSessionId(null);
+      }
+
       await call?.leave().catch(() => undefined);
       await client?.disconnectUser().catch(() => undefined);
 
@@ -250,6 +258,17 @@ export function useStreamAudioCall({
       if (isStreamClientConnected) {
         await streamClient?.disconnectUser().catch(() => undefined);
       }
+
+      nextAgentSession = null;
+      streamCall = null;
+      streamClient = null;
+      isStreamClientConnected = false;
+      agentSessionRef.current = null;
+      setAgentSessionId(null);
+      setCall(null);
+      setClient(null);
+      setIsCameraOn(false);
+      setIsMuted(false);
 
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to create audio session.",
@@ -370,20 +389,27 @@ export function useStreamAudioCall({
 
     setStatus("ending");
 
+    let errorOccurred = false;
+
     try {
       await call.endCall();
+    } catch (error) {
+      errorOccurred = true;
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to end audio call.",
+      );
+      setStatus("error");
+    } finally {
       await call.leave().catch(() => undefined);
       await client?.disconnectUser().catch(() => undefined);
       setCall(null);
       setClient(null);
       setIsCameraOn(false);
       setIsMuted(false);
-      setStatus("ended");
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Unable to end audio call.",
-      );
-      setStatus("error");
+
+      if (!errorOccurred) {
+        setStatus("ended");
+      }
     }
   }, [call, client]);
 

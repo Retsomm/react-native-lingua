@@ -22,6 +22,17 @@ type AgentSessionStopRequest = {
   sessionId?: string;
 };
 
+const VISION_AGENT_TIMEOUT_MS = Number(
+  process.env.VISION_AGENT_TIMEOUT_MS ?? 15_000,
+);
+
+class VisionAgentRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "VisionAgentRequestError";
+  }
+}
+
 function getVisionAgentBaseUrl() {
   const baseUrl = process.env.VISION_AGENT_BASE_URL?.replace(/\/+$/, "");
 
@@ -45,6 +56,33 @@ async function readErrorMessage(response: Response) {
   );
 }
 
+async function fetchVisionAgent(
+  endpoint: string,
+  init: RequestInit,
+  context: { callId: string },
+) {
+  const baseUrl = getVisionAgentBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, VISION_AGENT_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new VisionAgentRequestError(
+        `Vision Agent request timed out after ${VISION_AGENT_TIMEOUT_MS}ms for ${baseUrl}${endpoint} (callId: ${context.callId}).`,
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as AgentSessionRequest;
@@ -56,8 +94,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await fetch(
-      `${getVisionAgentBaseUrl()}/calls/${body.callId}/sessions`,
+    const response = await fetchVisionAgent(
+      `/calls/${encodeURIComponent(body.callId)}/sessions`,
       {
         body: JSON.stringify({
           call_type: body.callType,
@@ -70,6 +108,7 @@ export async function POST(request: Request) {
         headers: { "Content-Type": "application/json" },
         method: "POST",
       },
+      { callId: body.callId },
     );
 
     if (!response.ok) {
@@ -97,7 +136,12 @@ export async function POST(request: Request) {
     console.error("Failed to start Vision Agent session", error);
 
     return Response.json(
-      { error: "Unable to start the AI teacher session." },
+      {
+        error:
+          error instanceof VisionAgentRequestError
+            ? error.message
+            : "Unable to start the AI teacher session.",
+      },
       { status: 500 },
     );
   }
@@ -114,9 +158,12 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const response = await fetch(
-      `${getVisionAgentBaseUrl()}/calls/${body.callId}/sessions/${body.sessionId}`,
+    const response = await fetchVisionAgent(
+      `/calls/${encodeURIComponent(body.callId)}/sessions/${encodeURIComponent(
+        body.sessionId,
+      )}`,
       { method: "DELETE" },
+      { callId: body.callId },
     );
 
     if (!response.ok && response.status !== 404) {
@@ -131,7 +178,12 @@ export async function DELETE(request: Request) {
     console.error("Failed to stop Vision Agent session", error);
 
     return Response.json(
-      { error: "Unable to stop the AI teacher session." },
+      {
+        error:
+          error instanceof VisionAgentRequestError
+            ? error.message
+            : "Unable to stop the AI teacher session.",
+      },
       { status: 500 },
     );
   }
