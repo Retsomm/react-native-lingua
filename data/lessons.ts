@@ -1,5 +1,89 @@
 import type { Lesson } from "@/types/learning";
 
+type StarterLessonSeed = {
+  id: string;
+  languageId: string;
+  unitId: string;
+  title: string;
+  description: string;
+  mode: Lesson["mode"];
+  order: number;
+  vocabulary: {
+    term: string;
+    translation: string;
+    pronunciation: string;
+    example: string;
+  }[];
+  phrase: {
+    phrase: string;
+    translation: string;
+    pronunciation: string;
+    context: string;
+  };
+};
+
+function createStarterLesson(seed: StarterLessonSeed): Lesson {
+  const primaryVocabulary = seed.vocabulary[0];
+  const secondaryVocabulary = seed.vocabulary[1] ?? seed.vocabulary[0];
+
+  return {
+    id: seed.id,
+    languageId: seed.languageId,
+    unitId: seed.unitId,
+    title: seed.title,
+    description: seed.description,
+    mode: seed.mode,
+    order: seed.order,
+    xpReward: 10,
+    estimatedMinutes: seed.order <= 3 ? 5 : 6,
+    goals: [
+      `Learn ${primaryVocabulary.term} and ${secondaryVocabulary.term}.`,
+      `Practice ${seed.phrase.phrase} in a short response.`,
+      "Build confidence with beginner-friendly repetition.",
+    ],
+    vocabulary: seed.vocabulary.map((item, index) => ({
+      id: `${seed.id}-vocab-${index + 1}`,
+      ...item,
+    })),
+    phrases: [
+      {
+        id: `${seed.id}-phrase-1`,
+        ...seed.phrase,
+      },
+    ],
+    activities: [
+      {
+        id: `${seed.id}-vocab-activity-1`,
+        type: "vocabulary",
+        prompt: `Tap the word that means ${primaryVocabulary.translation}.`,
+        vocabularyId: `${seed.id}-vocab-1`,
+      },
+      {
+        id: `${seed.id}-choice-1`,
+        type: "multiple-choice",
+        prompt: `What does ${secondaryVocabulary.term} mean?`,
+        answer: secondaryVocabulary.translation,
+        options: [
+          secondaryVocabulary.translation,
+          primaryVocabulary.translation,
+          "teacher",
+          "water",
+        ],
+      },
+      {
+        id: `${seed.id}-repeat-1`,
+        type: "listen-and-repeat",
+        prompt: "Listen and repeat the phrase.",
+        text: seed.phrase.phrase,
+        pronunciation: seed.phrase.pronunciation,
+      },
+    ],
+    aiTeacherPrompt: `Teach a beginner ${seed.languageId} learner ${seed.vocabulary
+      .map((item) => item.term)
+      .join(", ")} and ${seed.phrase.phrase}. Keep the lesson warm, practical, and easy to repeat.`,
+  };
+}
+
 export const lessons: Lesson[] = [
   {
     id: "spanish-greetings",
@@ -382,4 +466,240 @@ export const lessons: Lesson[] = [
     aiTeacherPrompt:
       "Create a simple Japanese classroom practice. Teach 先生, はい, いいえ, and わかります with short call-and-response audio prompts.",
   },
+  ...getAdditionalStarterLessons(),
 ];
+
+function getAdditionalStarterLessons() {
+  return [
+    createStarterLesson({
+      id: "spanish-cafe",
+      languageId: "spanish",
+      unitId: "spanish-basics",
+      title: "At the Cafe",
+      description: "Order a drink and thank the server politely.",
+      mode: "audio",
+      order: 3,
+      vocabulary: [
+        { term: "café", translation: "coffee", pronunciation: "kah-FEH", example: "Quiero un café." },
+        { term: "gracias", translation: "thank you", pronunciation: "GRAH-see-ahs", example: "Gracias por el café." },
+      ],
+      phrase: { phrase: "Un café, por favor.", translation: "A coffee, please.", pronunciation: "oon kah-FEH por fah-VOR", context: "Use when ordering at a cafe." },
+    }),
+    createStarterLesson({
+      id: "spanish-travel",
+      languageId: "spanish",
+      unitId: "spanish-basics",
+      title: "Travel & Directions",
+      description: "Ask where a place is and follow a simple direction.",
+      mode: "practice",
+      order: 4,
+      vocabulary: [
+        { term: "calle", translation: "street", pronunciation: "KAH-yeh", example: "La calle es grande." },
+        { term: "derecha", translation: "right", pronunciation: "deh-REH-chah", example: "Gira a la derecha." },
+      ],
+      phrase: { phrase: "¿Dónde está...?", translation: "Where is...?", pronunciation: "DON-deh ehs-TAH", context: "Use when asking for directions." },
+    }),
+    createStarterLesson({
+      id: "spanish-shopping",
+      languageId: "spanish",
+      unitId: "spanish-basics",
+      title: "Shopping",
+      description: "Ask about prices and identify common store words.",
+      mode: "chat",
+      order: 5,
+      vocabulary: [
+        { term: "precio", translation: "price", pronunciation: "PREH-see-oh", example: "El precio es bueno." },
+        { term: "tienda", translation: "store", pronunciation: "TYEN-dah", example: "La tienda está abierta." },
+      ],
+      phrase: { phrase: "¿Cuánto cuesta?", translation: "How much does it cost?", pronunciation: "KWAN-toh KWEHS-tah", context: "Use before buying something." },
+    }),
+    createStarterLesson({
+      id: "spanish-family",
+      languageId: "spanish",
+      unitId: "spanish-basics",
+      title: "Family & Friends",
+      description: "Talk about people close to you.",
+      mode: "practice",
+      order: 6,
+      vocabulary: [
+        { term: "familia", translation: "family", pronunciation: "fah-MEE-lyah", example: "Mi familia es pequeña." },
+        { term: "amigo", translation: "friend", pronunciation: "ah-MEE-goh", example: "Mi amigo se llama Luis." },
+      ],
+      phrase: { phrase: "Este es mi amigo.", translation: "This is my friend.", pronunciation: "EHS-teh ehs mee ah-MEE-goh", context: "Use when introducing a friend." },
+    }),
+    createStarterLesson({
+      id: "french-daily-life",
+      languageId: "french",
+      unitId: "french-basics",
+      title: "Daily Life",
+      description: "Name simple routines and everyday moments.",
+      mode: "practice",
+      order: 3,
+      vocabulary: [
+        { term: "matin", translation: "morning", pronunciation: "mah-TAN", example: "Bonjour le matin." },
+        { term: "soir", translation: "evening", pronunciation: "swahr", example: "Bonsoir le soir." },
+      ],
+      phrase: { phrase: "Je suis prêt.", translation: "I am ready.", pronunciation: "zhuh swee preh", context: "Use when starting an activity." },
+    }),
+    createStarterLesson({
+      id: "french-travel",
+      languageId: "french",
+      unitId: "french-basics",
+      title: "Travel & Directions",
+      description: "Ask where something is during a trip.",
+      mode: "practice",
+      order: 4,
+      vocabulary: [
+        { term: "gare", translation: "station", pronunciation: "gahr", example: "La gare est proche." },
+        { term: "droite", translation: "right", pronunciation: "drwaht", example: "Tournez à droite." },
+      ],
+      phrase: { phrase: "Où est la gare ?", translation: "Where is the station?", pronunciation: "oo eh lah gahr", context: "Use when traveling by train." },
+    }),
+    createStarterLesson({
+      id: "french-shopping",
+      languageId: "french",
+      unitId: "french-basics",
+      title: "Shopping",
+      description: "Ask for an item and understand a simple price.",
+      mode: "chat",
+      order: 5,
+      vocabulary: [
+        { term: "prix", translation: "price", pronunciation: "pree", example: "Le prix est bas." },
+        { term: "magasin", translation: "store", pronunciation: "mah-gah-ZAN", example: "Le magasin est ouvert." },
+      ],
+      phrase: { phrase: "Je voudrais ceci.", translation: "I would like this.", pronunciation: "zhuh voo-DREH suh-SEE", context: "Use while shopping politely." },
+    }),
+    createStarterLesson({
+      id: "french-family",
+      languageId: "french",
+      unitId: "french-basics",
+      title: "Family & Friends",
+      description: "Introduce close people in simple French.",
+      mode: "practice",
+      order: 6,
+      vocabulary: [
+        { term: "famille", translation: "family", pronunciation: "fah-MEE", example: "Ma famille est ici." },
+        { term: "ami", translation: "friend", pronunciation: "ah-MEE", example: "Mon ami parle français." },
+      ],
+      phrase: { phrase: "Voici mon ami.", translation: "This is my friend.", pronunciation: "vwah-SEE mohn ah-MEE", context: "Use when introducing a friend." },
+    }),
+    createStarterLesson({
+      id: "japanese-cafe",
+      languageId: "japanese",
+      unitId: "japanese-basics",
+      title: "At the Cafe",
+      description: "Order tea or coffee with polite language.",
+      mode: "audio",
+      order: 3,
+      vocabulary: [
+        { term: "コーヒー", translation: "coffee", pronunciation: "koh-hee", example: "コーヒーをください。" },
+        { term: "お茶", translation: "tea", pronunciation: "oh-chah", example: "お茶を飲みます。" },
+      ],
+      phrase: { phrase: "これをください。", translation: "This, please.", pronunciation: "koh-reh oh koo-dah-sai", context: "Use when ordering or buying." },
+    }),
+    createStarterLesson({
+      id: "japanese-travel",
+      languageId: "japanese",
+      unitId: "japanese-basics",
+      title: "Travel & Directions",
+      description: "Ask where the station is and understand directions.",
+      mode: "practice",
+      order: 4,
+      vocabulary: [
+        { term: "駅", translation: "station", pronunciation: "eh-kee", example: "駅はどこですか。" },
+        { term: "右", translation: "right", pronunciation: "mee-gee", example: "右に行きます。" },
+      ],
+      phrase: { phrase: "駅はどこですか。", translation: "Where is the station?", pronunciation: "eh-kee wah doh-koh dehs kah", context: "Use when asking for directions." },
+    }),
+    createStarterLesson({
+      id: "japanese-shopping",
+      languageId: "japanese",
+      unitId: "japanese-basics",
+      title: "Shopping",
+      description: "Ask about prices and point to what you want.",
+      mode: "chat",
+      order: 5,
+      vocabulary: [
+        { term: "いくら", translation: "how much", pronunciation: "ee-koo-rah", example: "これはいくらですか。" },
+        { term: "店", translation: "store", pronunciation: "miseh", example: "店に行きます。" },
+      ],
+      phrase: { phrase: "これはいくらですか。", translation: "How much is this?", pronunciation: "koh-reh wah ee-koo-rah dehs kah", context: "Use while shopping." },
+    }),
+    createStarterLesson({
+      id: "japanese-family",
+      languageId: "japanese",
+      unitId: "japanese-basics",
+      title: "Family & Friends",
+      description: "Talk about your family and friends.",
+      mode: "practice",
+      order: 6,
+      vocabulary: [
+        { term: "家族", translation: "family", pronunciation: "kah-zoh-koo", example: "家族がいます。" },
+        { term: "友だち", translation: "friend", pronunciation: "toh-moh-dah-chee", example: "友だちです。" },
+      ],
+      phrase: { phrase: "こちらは友だちです。", translation: "This is my friend.", pronunciation: "koh-chee-rah wah toh-moh-dah-chee dehs", context: "Use when introducing someone." },
+    }),
+    ...createLanguageStarterSet("korean", "korean-basics", [
+      ["Greetings & Introductions", "Say hello and introduce yourself.", "안녕하세요", "hello", "ahn-nyoung-hah-seh-yoh", "안녕하세요, 민지예요.", "이름", "name", "ee-reum", "제 이름은 민지예요.", "제 이름은...", "My name is...", "jeh ee-reum-eun", "Use when introducing yourself."],
+      ["Daily Life", "Practice useful daily routine words.", "아침", "morning", "ah-chim", "아침이에요.", "학교", "school", "hak-gyo", "학교에 가요.", "학교에 가요.", "I go to school.", "hak-gyo-eh gah-yoh", "Use when talking about your day."],
+      ["At the Cafe", "Order a drink politely.", "커피", "coffee", "kuh-pee", "커피 주세요.", "감사합니다", "thank you", "gahm-sah-hahm-nee-dah", "감사합니다.", "커피 주세요.", "Coffee, please.", "kuh-pee joo-seh-yoh", "Use when ordering coffee."],
+      ["Travel & Directions", "Ask where a place is.", "역", "station", "yeok", "역은 어디예요?", "오른쪽", "right", "oh-reun-jjok", "오른쪽으로 가요.", "역은 어디예요?", "Where is the station?", "yeok-eun oh-dee-yeh-yoh", "Use when asking for directions."],
+      ["Shopping", "Ask prices and name store items.", "가격", "price", "gah-gyeok", "가격이 좋아요.", "가게", "store", "gah-geh", "가게에 가요.", "얼마예요?", "How much is it?", "eol-mah-yeh-yoh", "Use before buying something."],
+      ["Family & Friends", "Introduce people close to you.", "가족", "family", "gah-jok", "가족이에요.", "친구", "friend", "chin-goo", "제 친구예요.", "제 친구예요.", "This is my friend.", "jeh chin-goo-yeh-yoh", "Use when introducing a friend."],
+    ]),
+    ...createLanguageStarterSet("chinese", "chinese-basics", [
+      ["Greetings & Introductions", "Say hello and share your name.", "你好", "hello", "nee how", "你好，我是小明。", "名字", "name", "ming dzuh", "我的名字是小明。", "我叫...", "My name is...", "waw jyow", "Use when introducing yourself."],
+      ["Daily Life", "Talk about school and routines.", "早上", "morning", "dzow shahng", "早上好。", "学校", "school", "shwe shyaow", "我去学校。", "我去学校。", "I go to school.", "waw chyoo shwe shyaow", "Use when describing your day."],
+      ["At the Cafe", "Order tea or coffee politely.", "咖啡", "coffee", "kah fay", "我要咖啡。", "谢谢", "thank you", "shyeh shyeh", "谢谢你。", "我要一杯咖啡。", "I want a cup of coffee.", "waw yaow ee bay kah fay", "Use when ordering coffee."],
+      ["Travel & Directions", "Ask for places and directions.", "车站", "station", "chuh jahn", "车站在哪里？", "右边", "right side", "yo byan", "在右边。", "车站在哪里？", "Where is the station?", "chuh jahn dzai nah lee", "Use when asking for directions."],
+      ["Shopping", "Ask how much something costs.", "价格", "price", "jyah guh", "价格很好。", "商店", "store", "shahng dyan", "商店开了。", "多少钱？", "How much money?", "dwaw shaow chyan", "Use while shopping."],
+      ["Family & Friends", "Talk about family and friends.", "家人", "family", "jyah ren", "我的家人。", "朋友", "friend", "peng yo", "这是我的朋友。", "这是我的朋友。", "This is my friend.", "juh shih waw duh peng yo", "Use when introducing a friend."],
+    ]),
+    ...createLanguageStarterSet("english", "english-basics", [
+      ["Greetings & Introductions", "Say hello and introduce yourself.", "hello", "a greeting", "heh-LOW", "Hello, I am Mia.", "name", "name", "naym", "My name is Mia.", "My name is...", "My name is...", "my naym iz", "Use when introducing yourself."],
+      ["Daily Life", "Practice simple routine words.", "morning", "morning", "MOR-ning", "Good morning.", "school", "school", "skool", "I go to school.", "I go to school.", "I go to school.", "eye goh too skool", "Use when talking about your day."],
+      ["At the Cafe", "Order a drink politely.", "coffee", "coffee", "KAW-fee", "I want coffee.", "please", "please", "pleez", "Coffee, please.", "Coffee, please.", "Coffee, please.", "KAW-fee pleez", "Use when ordering a drink."],
+      ["Travel & Directions", "Ask where a place is.", "station", "station", "STAY-shun", "Where is the station?", "right", "right", "ryt", "Turn right.", "Where is the station?", "Where is the station?", "wair iz the STAY-shun", "Use when asking for directions."],
+      ["Shopping", "Ask about prices.", "price", "price", "prys", "The price is low.", "store", "store", "stor", "The store is open.", "How much is it?", "How much is it?", "how much iz it", "Use before buying something."],
+      ["Family & Friends", "Introduce family and friends.", "family", "family", "FAM-uh-lee", "This is my family.", "friend", "friend", "frend", "This is my friend.", "This is my friend.", "This is my friend.", "this iz my frend", "Use when introducing a friend."],
+    ]),
+  ];
+}
+
+function createLanguageStarterSet(
+  languageId: string,
+  unitId: string,
+  rows: string[][],
+) {
+  return rows.map((row, index) =>
+    createStarterLesson({
+      id: `${languageId}-${row[0].toLowerCase().replaceAll(" & ", "-").replaceAll(" ", "-")}`,
+      languageId,
+      unitId,
+      title: row[0],
+      description: row[1],
+      mode: index === 2 ? "audio" : index === 4 ? "chat" : "practice",
+      order: index + 1,
+      vocabulary: [
+        {
+          term: row[2],
+          translation: row[3],
+          pronunciation: row[4],
+          example: row[5],
+        },
+        {
+          term: row[6],
+          translation: row[7],
+          pronunciation: row[8],
+          example: row[9],
+        },
+      ],
+      phrase: {
+        phrase: row[10],
+        translation: row[11],
+        pronunciation: row[12],
+        context: row[13],
+      },
+    }),
+  );
+}
