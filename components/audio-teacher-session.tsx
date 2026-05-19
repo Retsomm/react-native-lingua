@@ -124,6 +124,7 @@ function AudioTeacherSessionContent({
   const statusCopy = getAudioCallCopy(audioCall.status, audioCall.errorMessage);
   const isBusy =
     audioCall.status === "starting" ||
+    audioCall.status === "connecting-agent" ||
     audioCall.status === "joining" ||
     audioCall.status === "muting" ||
     audioCall.status === "ending";
@@ -150,7 +151,7 @@ function AudioTeacherSessionContent({
     }
 
     if (canStart) {
-      audioCall.startCall();
+      audioCall.joinCall();
     }
   };
 
@@ -512,6 +513,7 @@ function getAudioCallCopy(
   status:
     | "idle"
     | "starting"
+    | "connecting-agent"
     | "ready"
     | "joining"
     | "joined"
@@ -527,6 +529,13 @@ function getAudioCallCopy(
         body: "Creating a private Stream audio lesson session.",
         header: "Starting",
         prompt: "Setting up your audio lesson...",
+        status,
+      };
+    case "connecting-agent":
+      return {
+        body: "Connecting the AI teacher to this lesson call.",
+        header: "Teacher joining",
+        prompt: "Your AI teacher is joining...",
         status,
       };
     case "ready":

@@ -1,8 +1,17 @@
 import { StreamClient } from "@stream-io/node-sdk";
+import type { LessonActivity, PhraseItem, VocabularyItem } from "@/types/learning";
 
 type AudioCallRequest = {
   languageId?: string;
   languageName?: string;
+  lesson?: {
+    activities?: LessonActivity[];
+    aiTeacherPrompt?: string;
+    description?: string;
+    goals?: string[];
+    phrases?: PhraseItem[];
+    vocabulary?: VocabularyItem[];
+  };
   lessonId?: string;
   lessonTitle?: string;
   user?: {
@@ -13,6 +22,7 @@ type AudioCallRequest = {
 };
 
 const callType = "default";
+const agentUserId = "lingua-ai-teacher";
 
 function cleanId(value: string) {
   return value
@@ -27,6 +37,18 @@ function compactId(value: string, maxLength: number) {
   const cleaned = cleanId(value);
 
   return cleaned.slice(0, maxLength);
+}
+
+function getInvalidIdentifierError(
+  identifiers: { name: string; value: string }[],
+) {
+  const invalidIdentifier = identifiers.find(({ value }) => !value);
+
+  if (!invalidIdentifier) {
+    return null;
+  }
+
+  return `Invalid ${invalidIdentifier.name}: identifier is empty after sanitization.`;
 }
 
 function getStreamClient() {
@@ -62,6 +84,17 @@ export async function POST(request: Request) {
     const safeLessonId = compactId(lessonId, 18);
     const safeLanguageId = compactId(languageId, 10);
     const safeUserSegment = compactId(userId, 12);
+    const invalidIdentifierError = getInvalidIdentifierError([
+      { name: "user.id", value: safeUserId },
+      { name: "lessonId", value: safeLessonId },
+      { name: "languageId", value: safeLanguageId },
+      { name: "user.id", value: safeUserSegment },
+    ]);
+
+    if (invalidIdentifierError) {
+      return Response.json({ error: invalidIdentifierError }, { status: 400 });
+    }
+
     const uniqueSegment = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
     const callId = [
       "lesson",
@@ -79,6 +112,11 @@ export async function POST(request: Request) {
         name: body.user?.name ?? "Language learner",
         role: "user",
       },
+      {
+        id: agentUserId,
+        name: "Lingua AI Teacher",
+        role: "admin",
+      },
     ]);
 
     const call = client.video.call(callType, callId);
@@ -89,11 +127,15 @@ export async function POST(request: Request) {
         custom: {
           languageId,
           languageName: body.languageName ?? languageId,
+          lesson: body.lesson,
           lessonId,
           lessonTitle: body.lessonTitle ?? lessonId,
           mode: "video-lesson",
         },
-        members: [{ role: "call_member", user_id: safeUserId }],
+        members: [
+          { role: "call_member", user_id: safeUserId },
+          { role: "admin", user_id: agentUserId },
+        ],
         video: true,
       },
     });

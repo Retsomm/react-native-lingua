@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,19 @@ from vision_agents.plugins import getstream, openai
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SERVICE_DIR = Path(__file__).resolve().parent
+MAX_METADATA_LENGTH = 80
+DIRECTIVE_PATTERNS = (
+    r"\byou\s+are\b",
+    r"\bignore\s+(all\s+)?previous\b",
+    r"\bdisregard\s+(all\s+)?previous\b",
+    r"\bforget\s+(all\s+)?previous\b",
+    r"\bsystem\s*(prompt|message|instructions?)?\b",
+    r"\bdeveloper\s*(message|instructions?)?\b",
+    r"\bassistant\s*(message|instructions?)?\b",
+    r"\bact\s+as\b",
+    r"\bpretend\s+to\s+be\b",
+    r"<\|[^>]+?\|>",
+)
 
 
 def load_environment() -> None:
@@ -28,6 +42,59 @@ def required_env(name: str) -> str:
     return value
 
 
+def sanitize_metadata(value: Any, fallback: str) -> str:
+    if not isinstance(value, str):
+        return fallback
+
+    text = re.sub(r"[\x00-\x1f\x7f]+", " ", value)
+    text = re.sub(r"\s+", " ", text).strip()
+
+    if not text:
+        return fallback
+
+    for pattern in DIRECTIVE_PATTERNS:
+        text = re.sub(pattern, "", text, flags=re.IGNORECASE)
+
+    text = re.sub(r"\s+", " ", text).strip(" -:;,.")
+
+    if not text:
+        return fallback
+
+    return text[:MAX_METADATA_LENGTH].strip()
+
+
+def sanitize_metadata_list(values: Any, fallback: list[str], limit: int = 4) -> list[str]:
+    if not isinstance(values, list):
+        return fallback
+
+    sanitized_values = [
+        sanitize_metadata(value, "") for value in values if isinstance(value, str)
+    ]
+
+    return [value for value in sanitized_values if value][:limit] or fallback
+
+
+def sanitize_lesson_items(values: Any, key: str, limit: int = 4) -> list[str]:
+    if not isinstance(values, list):
+        return []
+
+    items: list[str] = []
+
+    for value in values:
+        if not isinstance(value, dict):
+            continue
+
+        item = sanitize_metadata(value.get(key), "")
+
+        if item:
+            items.append(item)
+
+        if len(items) >= limit:
+            break
+
+    return items
+
+
 class PassthroughAudioFilter(AudioFilter):
     async def process_audio(self, pcm: Any, participant: Any) -> Any:
         return pcm
@@ -37,10 +104,26 @@ class PassthroughAudioFilter(AudioFilter):
 
 
 def build_teacher_instructions(**kwargs: Any) -> str:
-    language_name = kwargs.get("language_name") or kwargs.get("languageName")
-    lesson_title = kwargs.get("lesson_title") or kwargs.get("lessonTitle")
-    language = language_name or "the selected language"
-    lesson = lesson_title or "the selected lesson"
+    lesson_data = kwargs.get("lesson")
+    lesson_payload = lesson_data if isinstance(lesson_data, dict) else {}
+    language = sanitize_metadata(
+        kwargs.get("language_name") or kwargs.get("languageName"),
+        "the selected language",
+    )
+    lesson = sanitize_metadata(
+        kwargs.get("lesson_title") or kwargs.get("lessonTitle"),
+        "the selected lesson",
+    )
+    goals = sanitize_metadata_list(lesson_payload.get("goals"), [])
+    vocabulary = sanitize_lesson_items(lesson_payload.get("vocabulary"), "term")
+    phrases = sanitize_lesson_items(lesson_payload.get("phrases"), "phrase")
+    teacher_prompt = sanitize_metadata(lesson_payload.get("aiTeacherPrompt"), "")
+    lesson_context = [
+        f"Lesson goals: {', '.join(goals)}." if goals else "",
+        f"Vocabulary to practice: {', '.join(vocabulary)}." if vocabulary else "",
+        f"Target phrases: {', '.join(phrases)}." if phrases else "",
+        f"Lesson note: {teacher_prompt}." if teacher_prompt else "",
+    ]
 
     return "\n".join(
         [
@@ -52,6 +135,7 @@ def build_teacher_instructions(**kwargs: Any) -> str:
             "Start by greeting the learner, naming the lesson, and asking them to repeat one simple phrase.",
             "When the learner answers, give brief pronunciation feedback and continue with one next practice prompt.",
             "Do not use markdown, bullets, special symbols, or long explanations in spoken output.",
+            *[item for item in lesson_context if item],
         ],
     )
 

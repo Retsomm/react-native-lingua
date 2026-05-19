@@ -6,9 +6,14 @@ import type {
   User,
 } from "@stream-io/video-react-native-sdk";
 import {
+  StreamVideo,
+  StreamVideoClient as StreamVideoClientClass,
+} from "@stream-io/video-react-native-sdk";
+import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentType,
   type ReactNode,
@@ -17,6 +22,7 @@ import {
 type AudioCallStatus =
   | "idle"
   | "starting"
+  | "connecting-agent"
   | "ready"
   | "joining"
   | "joined"
@@ -27,6 +33,7 @@ type AudioCallStatus =
 
 type AudioCallResponse = {
   apiKey: string;
+  callCid: string;
   callId: string;
   callType: string;
   token: string;
@@ -35,6 +42,10 @@ type AudioCallResponse = {
     image: string | null;
     name: string;
   };
+};
+
+type AgentSessionResponse = {
+  sessionId: string;
 };
 
 type StreamVideoProvider = ComponentType<{
@@ -69,11 +80,18 @@ function isAudioCallResponse(
   return "apiKey" in data && "token" in data && "user" in data;
 }
 
+function isAgentSessionResponse(
+  data: AgentSessionResponse | { error?: string },
+): data is AgentSessionResponse {
+  return "sessionId" in data;
+}
+
 export function useStreamAudioCall({
   language,
   lesson,
   user,
 }: UseStreamAudioCallArgs) {
+  const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
   const [call, setCall] = useState<Call | null>(null);
   const [client, setClient] = useState<StreamVideoClient | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -85,6 +103,10 @@ export function useStreamAudioCall({
   const [streamUser, setStreamUser] = useState<AudioCallResponse["user"] | null>(
     null,
   );
+  const agentSessionRef = useRef<{
+    callId: string;
+    sessionId: string;
+  } | null>(null);
 
   const clerkUserName = useMemo(() => {
     if (!user) {
@@ -104,11 +126,29 @@ export function useStreamAudioCall({
     setErrorMessage(null);
     setStatus("starting");
 
+    let streamCall: Call | null = null;
+    let streamClient: StreamVideoClient | null = null;
+    let nextAgentSession:
+      | {
+          callId: string;
+          sessionId: string;
+        }
+      | null = null;
+    let isStreamClientConnected = false;
+
     try {
       const response = await fetch(getApiUrl("/api/stream/audio-call"), {
         body: JSON.stringify({
           languageId: language?.id ?? lesson.languageId,
           languageName: language?.name,
+          lesson: {
+            activities: lesson.activities,
+            aiTeacherPrompt: lesson.aiTeacherPrompt,
+            description: lesson.description,
+            goals: lesson.goals,
+            phrases: lesson.phrases,
+            vocabulary: lesson.vocabulary,
+          },
           lessonId: lesson.id,
           lessonTitle: lesson.title,
           user: {
@@ -140,17 +180,58 @@ export function useStreamAudioCall({
         image: data.user.image ?? undefined,
         name: data.user.name,
       };
-      const streamSdk = await import("@stream-io/video-react-native-sdk");
-
       await call?.leave().catch(() => undefined);
       await client?.disconnectUser().catch(() => undefined);
 
-      const streamClient = new streamSdk.StreamVideoClient(data.apiKey);
+      streamClient = new StreamVideoClientClass(data.apiKey);
       await streamClient.connectUser(streamUserData, data.token);
-      const streamCall = streamClient.call(data.callType, data.callId);
+      isStreamClientConnected = true;
+      streamCall = streamClient.call(data.callType, data.callId);
 
       await streamCall.camera.disable();
-      setStreamVideoProvider(() => streamSdk.StreamVideo);
+      setStatus("connecting-agent");
+
+      const agentResponse = await fetch(getApiUrl("/api/vision-agent/session"), {
+        body: JSON.stringify({
+          callId: data.callId,
+          callType: data.callType,
+          languageId: language?.id ?? lesson.languageId,
+          languageName: language?.name,
+          lesson: {
+            activities: lesson.activities,
+            aiTeacherPrompt: lesson.aiTeacherPrompt,
+            description: lesson.description,
+            goals: lesson.goals,
+            phrases: lesson.phrases,
+            vocabulary: lesson.vocabulary,
+          },
+          lessonId: lesson.id,
+          lessonTitle: lesson.title,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const agentData = (await agentResponse.json()) as
+        | AgentSessionResponse
+        | { error?: string };
+
+      if (!agentResponse.ok || !isAgentSessionResponse(agentData)) {
+        throw new Error(
+          "error" in agentData && agentData.error
+            ? agentData.error
+            : "Unable to connect the AI teacher.",
+        );
+      }
+
+      nextAgentSession = {
+        callId: data.callId,
+        sessionId: agentData.sessionId,
+      };
+      agentSessionRef.current = nextAgentSession;
+      setStreamVideoProvider(() => StreamVideo);
+      setAgentSessionId(agentData.sessionId);
       setClient(streamClient);
       setCall(streamCall);
       setStreamUser(data.user);
@@ -160,6 +241,16 @@ export function useStreamAudioCall({
 
       return streamCall;
     } catch (error) {
+      if (nextAgentSession) {
+        await stopAgentSession(nextAgentSession).catch(() => undefined);
+      }
+
+      await streamCall?.leave().catch(() => undefined);
+
+      if (isStreamClientConnected) {
+        await streamClient?.disconnectUser().catch(() => undefined);
+      }
+
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to create audio session.",
       );
@@ -264,6 +355,14 @@ export function useStreamAudioCall({
   }, [call, isCameraOn, joinCall, status]);
 
   const endCall = useCallback(async () => {
+    const currentAgentSession = agentSessionRef.current;
+
+    if (currentAgentSession) {
+      await stopAgentSession(currentAgentSession).catch(() => undefined);
+      agentSessionRef.current = null;
+      setAgentSessionId(null);
+    }
+
     if (!call) {
       setStatus("ended");
       return;
@@ -300,10 +399,22 @@ export function useStreamAudioCall({
     };
   }, [client]);
 
+  useEffect(() => {
+    return () => {
+      const currentAgentSession = agentSessionRef.current;
+
+      if (currentAgentSession) {
+        stopAgentSession(currentAgentSession).catch(() => undefined);
+        agentSessionRef.current = null;
+      }
+    };
+  }, []);
+
   return {
     call,
     client,
     endCall,
+    agentSessionId,
     errorMessage,
     isCameraOn,
     isMuted,
@@ -315,4 +426,14 @@ export function useStreamAudioCall({
     toggleCamera,
     toggleMute,
   };
+}
+
+async function stopAgentSession(session: { callId: string; sessionId: string }) {
+  await fetch(getApiUrl("/api/vision-agent/session"), {
+    body: JSON.stringify(session),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "DELETE",
+  });
 }

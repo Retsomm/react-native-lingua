@@ -67,6 +67,7 @@ export default {
       reactCompiler: true,
     },
     extra: {
+      apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
       posthogProjectToken:
         process.env.POSTHOG_API_KEY ?? process.env.POSTHOG_PROJECT_TOKEN,
       posthogHost: process.env.POSTHOG_HOST,
