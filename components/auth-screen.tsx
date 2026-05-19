@@ -1,5 +1,5 @@
 import { images } from "@/constants/images";
-import { useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import { useAuth, useSignIn, useSignUp, useSSO } from "@clerk/expo";
 import {
   AntDesign,
   FontAwesome,
@@ -22,6 +22,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { usePostHog } from "posthog-react-native";
 
 type AuthMode = "sign-in" | "sign-up";
 type SocialStrategy =
@@ -90,11 +91,38 @@ function getAuthErrorMessage(error: unknown) {
   return "Something went wrong. Please try again.";
 }
 
+function getStableUserId(resource: unknown) {
+  if (!resource || typeof resource !== "object") {
+    return undefined;
+  }
+
+  if (
+    "createdUserId" in resource &&
+    typeof resource.createdUserId === "string"
+  ) {
+    return resource.createdUserId;
+  }
+
+  if (
+    "user" in resource &&
+    resource.user &&
+    typeof resource.user === "object" &&
+    "id" in resource.user &&
+    typeof resource.user.id === "string"
+  ) {
+    return resource.user.id;
+  }
+
+  return undefined;
+}
+
 export function AuthScreen({ mode }: AuthScreenProps) {
   const insets = useSafeAreaInsets();
   const { signIn, fetchStatus: signInStatus } = useSignIn();
   const { signUp, fetchStatus: signUpStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
+  const { userId } = useAuth();
+  const posthog = usePostHog();
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
@@ -126,6 +154,12 @@ export function AuthScreen({ mode }: AuthScreenProps) {
     }
 
     setAuthError(null);
+
+    if (isSignUp) {
+      posthog.capture("sign_up_submitted");
+    } else {
+      posthog.capture("sign_in_submitted");
+    }
 
     try {
       if (isSignUp) {
@@ -159,6 +193,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       setVerificationVisible(true);
     } catch (error) {
+      posthog.captureException(error, { auth_mode: mode });
       setAuthError(getAuthErrorMessage(error));
     }
   };
@@ -194,6 +229,14 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           setAuthError(finalizeError.message);
           return;
         }
+
+        const userId = signUp.createdUserId;
+        if (userId) {
+          posthog.identify(userId, {
+            $set_once: { sign_up_date: new Date().toISOString() },
+          });
+        }
+        posthog.capture("sign_up_completed");
       } else {
         const { error } = await signIn.emailCode.verifyCode({ code });
 
@@ -217,11 +260,18 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           setAuthError(finalizeError.message);
           return;
         }
+
+        const userId = getStableUserId(signIn);
+        if (userId) {
+          posthog.identify(userId);
+        }
+        posthog.capture("sign_in_completed");
       }
 
       setVerificationVisible(false);
       router.replace("/");
     } catch (error) {
+      posthog.captureException(error, { auth_mode: mode });
       setAuthError(getAuthErrorMessage(error));
     }
   };
@@ -233,6 +283,8 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
     setSocialAuthInProgress(true);
     setAuthError(null);
+
+    posthog.capture("social_auth_started", { strategy, auth_mode: mode });
 
     try {
       try {
@@ -258,6 +310,10 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       if (sessionId) {
         await setActive?.({ session: sessionId });
+        if (userId) {
+          posthog.identify(userId);
+        }
+        posthog.capture("social_auth_completed", { strategy, auth_mode: mode });
         router.replace("/");
         return;
       }
@@ -274,6 +330,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       setAuthError("Social sign in was cancelled or could not be completed.");
     } catch (error) {
+      posthog.captureException(error, { strategy, auth_mode: mode });
       setAuthError(getAuthErrorMessage(error));
     } finally {
       setSocialAuthInProgress(false);

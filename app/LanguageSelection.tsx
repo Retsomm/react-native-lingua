@@ -5,6 +5,7 @@ import type { SupportedLanguage } from "@/types/learning";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
+import { usePostHog } from "posthog-react-native";
 import {
   Image,
   Pressable,
@@ -20,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function LanguageSelectionScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const posthog = usePostHog();
   const persistedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
   const setSelectedLanguage = useLanguageStore(
     (state) => state.setSelectedLanguageId,
@@ -58,11 +60,15 @@ export default function LanguageSelectionScreen() {
     [selectedLanguageId],
   );
 
-  const handleConfirmLanguage = () => {
+  const handleConfirmLanguage = async () => {
     if (!selectedLanguage) {
       return;
     }
 
+    posthog.capture("language_confirmed", { languageId: selectedLanguage.id });
+    await posthog.flush().catch((flushError) => {
+      console.error("Failed to flush language confirmation event", flushError);
+    });
     setSelectedLanguage(selectedLanguage.id);
     router.replace("/");
   };
@@ -130,7 +136,10 @@ export default function LanguageSelectionScreen() {
               key={language.id}
               isSelected={language.id === selectedLanguageId}
               language={language}
-              onPress={() => setSelectedLanguageId(language.id)}
+              onPress={() => {
+                posthog.capture("language_selected", { languageId: language.id });
+                setSelectedLanguageId(language.id);
+              }}
             />
           ))}
         </View>
