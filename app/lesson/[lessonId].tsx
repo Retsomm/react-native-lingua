@@ -71,7 +71,10 @@ export default function LessonDetailScreen() {
       activeTabLabel="Learn"
       autoStartCall
       lesson={lesson}
-      onCallEnded={() => router.replace("/learn")}
+      onCallEnded={() => {
+        didCompleteLessonRef.current = true;
+        router.replace("/learn");
+      }}
     />
   );
 }
