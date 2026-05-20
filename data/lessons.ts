@@ -96,6 +96,7 @@ function createStarterLesson(seed: StarterLessonSeed): Lesson {
       },
     ],
     aiTeacherPrompt: `Warm ${seed.languageId} lesson: use only ${seed.vocabulary
+      .slice(0, 2)
       .map((item) => item.term)
       .join(", ")} and ${seed.phrase.phrase}. Mostly speak English, say each target item slowly with its meaning, listen, encourage, and ask for one repeat or try-again in one or two short sentences.`,
   };
