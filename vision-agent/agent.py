@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import os
 import re
+import logging
+import asyncio
+import time
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+from getstream import AsyncStream
 from vision_agents.core import Agent, AgentLauncher, Runner, User
+from vision_agents.core.agents.conversation import Conversation, Message, MessageState
 from vision_agents.core.instructions import Instructions
 from vision_agents.core.utils.audio_filter import AudioFilter
 from vision_agents.plugins import getstream, openai
@@ -14,7 +19,12 @@ from vision_agents.plugins import getstream, openai
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SERVICE_DIR = Path(__file__).resolve().parent
+AGENT_USER_ID = "lingua-ai-teacher"
 MAX_METADATA_LENGTH = 80
+MAX_CAPTION_BUFFER_LENGTH = 24
+CAPTION_BUFFERS: dict[str, list[dict[str, Any]]] = {}
+CAPTION_EVENTS: dict[str, asyncio.Event] = {}
+logger = logging.getLogger(__name__)
 DIRECTIVE_PATTERNS = (
     r"\byou\s+are\b",
     r"\bignore\s+(all\s+)?previous\b",
@@ -124,6 +134,123 @@ class PassthroughAudioFilter(AudioFilter):
         return None
 
 
+class CaptionMirroringConversation(Conversation):
+    def __init__(self, base: Conversation, stream_call: Any, call_id: str):
+        super().__init__(instructions=base.instructions, messages=base.messages)
+        self.base = base
+        self.call_id = call_id
+        self.stream_call = stream_call
+        self._last_caption_by_message_id: dict[str, str] = {}
+        self._caption_tasks: set[asyncio.Task[None]] = set()
+
+    async def upsert_message(
+        self,
+        role: str,
+        user_id: str,
+        content: str = "",
+        message_id: str | None = None,
+        content_index: int | None = None,
+        completed: bool = True,
+        replace: bool = False,
+        original: Any = None,
+    ) -> Message:
+        message = await self.base.upsert_message(
+            role=role,
+            user_id=user_id,
+            content=content,
+            message_id=message_id,
+            content_index=content_index,
+            completed=completed,
+            replace=replace,
+            original=original,
+        )
+        self.messages = self.base.messages
+        await self._mirror_caption(role=role, user_id=user_id, message=message)
+
+        return message
+
+    async def _sync_to_backend(
+        self, message: Message, state: MessageState, completed: bool
+    ) -> None:
+        return None
+
+    async def _mirror_caption(
+        self,
+        role: str,
+        user_id: str,
+        message: Message,
+    ) -> None:
+        text = re.sub(r"\s+", " ", message.content).strip()
+
+        if role not in {"assistant", "user"} or not text:
+            return
+
+        previous_text = self._last_caption_by_message_id.get(message.id or "")
+
+        if previous_text == text:
+            return
+
+        self._last_caption_by_message_id[message.id or ""] = text
+        speaker_id = AGENT_USER_ID if role == "assistant" else user_id
+        caption = {
+            "createdAt": int(time.time() * 1000),
+            "id": message.id,
+            "role": role,
+            "speakerId": speaker_id,
+            "text": text,
+        }
+        captions = CAPTION_BUFFERS.setdefault(self.call_id, [])
+        captions.append(caption)
+        del captions[:-MAX_CAPTION_BUFFER_LENGTH]
+        CAPTION_EVENTS.setdefault(self.call_id, asyncio.Event()).set()
+
+        task = asyncio.create_task(
+            self._send_caption_event(
+                caption_id=caption["id"],
+                role=role,
+                speaker_id=speaker_id,
+                text=text,
+            ),
+        )
+        self._caption_tasks.add(task)
+        task.add_done_callback(self._on_caption_task_done)
+
+    def _on_caption_task_done(self, task: asyncio.Task[None]) -> None:
+        self._caption_tasks.discard(task)
+
+        if task.cancelled():
+            return
+
+        error = task.exception()
+
+        if error:
+            logger.exception(
+                "Failed to mirror transcript into Stream custom event",
+                exc_info=error,
+            )
+
+    async def _send_caption_event(
+        self,
+        caption_id: str | None,
+        role: str,
+        speaker_id: str,
+        text: str,
+    ) -> None:
+        try:
+            await self.stream_call.send_call_event(
+                user_id=AGENT_USER_ID,
+                custom={
+                    "type": "lingua.live_caption",
+                    "captionId": caption_id,
+                    "role": role,
+                    "speakerId": speaker_id,
+                    "text": text,
+                },
+            )
+        except Exception:
+            logger.exception("Failed to mirror transcript into Stream custom event")
+
+
 def build_teacher_instructions(**kwargs: Any) -> str:
     payload = as_mapping(kwargs.get("custom")) or kwargs
     lesson_payload = as_mapping(payload.get("lesson"))
@@ -187,12 +314,25 @@ async def create_agent(**kwargs: Any) -> Agent:
 
     agent = Agent(
         edge=getstream.Edge(),
-        agent_user=User(name="Lingua AI Teacher", id="lingua-ai-teacher"),
+        agent_user=User(name="Lingua AI Teacher", id=AGENT_USER_ID),
         instructions=instructions,
         llm=openai.Realtime(
             model="gpt-realtime",
             voice="marin",
             fps=1,
+            realtime_session={
+                "type": "realtime",
+                "audio": {
+                    "input": {
+                        "transcription": {"model": "gpt-4o-mini-transcribe"},
+                        "turn_detection": {
+                            "type": "semantic_vad",
+                            "create_response": True,
+                            "interrupt_response": True,
+                        },
+                    },
+                },
+            },
             send_video=False,
         ),
         processors=[],
@@ -230,17 +370,65 @@ async def join_call(
         )
 
     async with agent.join(call):
-        await agent.simple_response(opening_prompt)
-        await agent.finish()
+        stream = AsyncStream(
+            api_key=required_env("STREAM_API_KEY"),
+            api_secret=required_env("STREAM_API_SECRET"),
+        )
+        stream_call = stream.video.call(call_type, call_id)
+        caption_conversation = CaptionMirroringConversation(
+            agent.conversation,
+            stream_call,
+            call_id,
+        )
+        agent.conversation = caption_conversation
+        agent._flow.set_conversation(caption_conversation)
+        agent.llm.set_conversation(caption_conversation)
+
+        try:
+            await agent.simple_response(opening_prompt)
+            await agent.finish()
+        finally:
+            await stream.aclose()
+
+
+def attach_caption_routes(runner: Runner) -> None:
+    @runner.fast_api.get("/calls/{call_id}/captions")
+    async def get_captions(call_id: str, after: int = 0) -> dict[str, Any]:
+        captions = [
+            caption
+            for caption in CAPTION_BUFFERS.get(call_id, [])
+            if int(caption.get("createdAt", 0)) > after
+        ]
+
+        if captions:
+            return {"captions": captions}
+
+        event = CAPTION_EVENTS.setdefault(call_id, asyncio.Event())
+        event.clear()
+
+        try:
+            await asyncio.wait_for(event.wait(), timeout=25)
+        except TimeoutError:
+            return {"captions": []}
+
+        return {
+            "captions": [
+                caption
+                for caption in CAPTION_BUFFERS.get(call_id, [])
+                if int(caption.get("createdAt", 0)) > after
+            ],
+        }
 
 
 if __name__ == "__main__":
     load_environment()
-    Runner(
+    runner = Runner(
         AgentLauncher(
             create_agent=create_agent,
             join_call=join_call,
             max_concurrent_sessions=5,
             max_sessions_per_call=1,
         ),
-    ).cli()
+    )
+    attach_caption_routes(runner)
+    runner.cli()

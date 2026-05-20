@@ -144,6 +144,12 @@ export async function POST(request: Request) {
           { role: "call_member", user_id: safeUserId },
           { role: "admin", user_id: agentUserId },
         ],
+        settings_override: {
+          transcription: {
+            closed_caption_mode: "available",
+            mode: "available",
+          },
+        },
         video: true,
       },
     });
