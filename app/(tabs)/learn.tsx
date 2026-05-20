@@ -146,12 +146,10 @@ export default function LearnScreen() {
                 lesson={lesson}
                 lessonNumber={index + 1}
                 onPress={() => {
-                  if (getLessonStatus(index) !== "not-started") {
-                    router.push({
-                      pathname: "/lesson/[lessonId]",
-                      params: { lessonId: lesson.id },
-                    });
-                  }
+                  router.push({
+                    pathname: "/lesson/[lessonId]",
+                    params: { lessonId: lesson.id },
+                  });
                 }}
                 status={getLessonStatus(index)}
               />

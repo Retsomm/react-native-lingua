@@ -10,6 +10,7 @@ export default {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.anonymous.expo-app-2026",
     },
     android: {
       adaptiveIcon: {
@@ -22,13 +23,32 @@ export default {
       predictiveBackGestureEnabled: false,
     },
     web: {
-      output: "static",
+      output: "server",
       favicon: "./assets/images/favicon.png",
     },
     plugins: [
+      "expo-localization",
       "expo-router",
       "expo-secure-store",
       "@clerk/expo",
+      [
+        "expo-build-properties",
+        {
+          android: {
+            minSdkVersion: 24,
+          },
+        },
+      ],
+      "@stream-io/video-react-native-sdk",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          cameraPermission:
+            "$(PRODUCT_NAME) uses the camera for video lessons when enabled.",
+          microphonePermission:
+            "$(PRODUCT_NAME) uses the microphone for live audio lessons.",
+        },
+      ],
       [
         "expo-splash-screen",
         {
@@ -47,6 +67,7 @@ export default {
       reactCompiler: true,
     },
     extra: {
+      apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
       posthogProjectToken:
         process.env.POSTHOG_API_KEY ?? process.env.POSTHOG_PROJECT_TOKEN,
       posthogHost: process.env.POSTHOG_HOST,
