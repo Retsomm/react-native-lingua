@@ -99,6 +99,7 @@ type JoinCallOptions = {
 };
 
 const maxCaptionHistory = 8;
+const captionPollIntervalMs = 1000;
 
 function isAudioCallResponse(
   data: AudioCallResponse | { error?: string },
@@ -648,13 +649,15 @@ export function useStreamAudioCall({
               captions.reduce(getNextBufferedCaption, currentCaptions),
             );
           }
+
+          await wait(captionPollIntervalMs, controller.signal);
         } catch (error) {
           if (controller.signal.aborted) {
             return;
           }
 
           // Captions are best-effort and should never interrupt the lesson audio.
-          await wait(1000, controller.signal);
+          await wait(captionPollIntervalMs, controller.signal);
         }
       }
     };
