@@ -95,9 +95,9 @@ function createStarterLesson(seed: StarterLessonSeed): Lesson {
         pronunciation: seed.phrase.pronunciation,
       },
     ],
-    aiTeacherPrompt: `Teach a beginner ${seed.languageId} learner ${seed.vocabulary
+    aiTeacherPrompt: `Warm ${seed.languageId} lesson: use only ${seed.vocabulary
       .map((item) => item.term)
-      .join(", ")} and ${seed.phrase.phrase}. Keep the lesson warm, practical, and easy to repeat.`,
+      .join(", ")} and ${seed.phrase.phrase}. Mostly speak English, say each target item slowly with its meaning, listen, encourage, and ask for one repeat or try-again in one or two short sentences.`,
   };
 }
 
@@ -165,7 +165,7 @@ export const lessons: Lesson[] = [
       },
     ],
     aiTeacherPrompt:
-      "Teach a beginner Spanish learner to say hola, adiós, and ¿Cómo estás? Keep the lesson warm, slow, and audio-first. Ask the learner to repeat each phrase once.",
+      "Warm Spanish greetings lesson: use only hola, adiós, and ¿Cómo estás? Mostly speak English, say each Spanish phrase slowly with its meaning, listen, encourage, and ask for one repeat or try-again in one or two short sentences.",
   },
   {
     id: "spanish-introductions",
@@ -222,7 +222,7 @@ export const lessons: Lesson[] = [
       },
     ],
     aiTeacherPrompt:
-      "Guide a beginner through a simple Spanish introduction. Model Me llamo and ¿Cómo te llamas?, then invite the learner to answer with their own name.",
+      "Warm Spanish introduction lesson: use only nombre, Me llamo..., and ¿Cómo te llamas? Mostly speak English, model each phrase slowly with its meaning, listen for the learner's name, encourage, and ask for one repeat or try-again in one or two short sentences.",
   },
   {
     id: "french-greetings",
@@ -287,7 +287,7 @@ export const lessons: Lesson[] = [
       },
     ],
     aiTeacherPrompt:
-      "Teach a beginner French learner bonjour, au revoir, and Comment ça va ? Use short examples, clear pronunciation coaching, and one repeat-after-me moment per phrase.",
+      "Warm French greetings lesson: use only bonjour, au revoir, and Comment ça va ? Mostly speak English, say each French phrase slowly with its meaning, listen, encourage, and ask for one repeat or try-again in one or two short sentences.",
   },
   {
     id: "french-cafe",
@@ -345,7 +345,7 @@ export const lessons: Lesson[] = [
       },
     ],
     aiTeacherPrompt:
-      "Run a short French cafe audio lesson for a beginner. Teach café, merci, and s'il vous plaît, then model one polite order slowly.",
+      "Warm French cafe lesson: use only café, merci, and s'il vous plaît. Mostly speak English, say each French phrase slowly with its meaning, listen, encourage, and ask for one repeat or try-again in one or two short sentences.",
   },
   {
     id: "japanese-greetings",
@@ -410,7 +410,7 @@ export const lessons: Lesson[] = [
       },
     ],
     aiTeacherPrompt:
-      "Teach a beginner Japanese learner こんにちは, ありがとう, and はじめまして. Keep the pace slow, explain the situations for each phrase, and prompt the learner to repeat.",
+      "Warm Japanese greetings lesson: use only こんにちは, ありがとう, and はじめまして. Mostly speak English, say each Japanese phrase slowly with its meaning, listen, encourage, and ask for one repeat or try-again in one or two short sentences.",
   },
   {
     id: "japanese-classroom",
@@ -481,7 +481,7 @@ export const lessons: Lesson[] = [
       },
     ],
     aiTeacherPrompt:
-      "Create a simple Japanese classroom practice. Teach 先生, はい, いいえ, and わかります with short call-and-response audio prompts.",
+      "Warm Japanese classroom lesson: use only 先生, はい, いいえ, and わかります. Mostly speak English, say each Japanese word slowly with its meaning, listen, encourage, and ask for one repeat or try-again in one or two short sentences.",
   },
   ...getAdditionalStarterLessons(),
 ];

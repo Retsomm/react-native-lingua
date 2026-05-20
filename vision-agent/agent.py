@@ -213,16 +213,20 @@ async def join_call(
     response = await call.get()
     custom_data = get_call_custom_data(response)
     opening_prompt = (
-        "Greet the learner in English, introduce yourself as their AI teacher, "
-        "and begin the first short speaking practice."
+        "Greet the learner warmly in English as their AI teacher. Sound human, "
+        "energetic, and focused. Use one or two short conversational sentences, "
+        "then ask them to repeat one target-language word or phrase slowly."
     )
 
     if custom_data:
         lesson_instructions = build_teacher_instructions(custom=custom_data)
         apply_agent_instructions(agent, lesson_instructions)
         opening_prompt = (
-            "Now greet the learner in English, introduce yourself as their AI teacher, "
-            "and begin the first short speaking practice from this lesson."
+            "Now greet the learner warmly in English as their AI teacher for this "
+            "lesson only. Stay strictly within the current lesson goal, vocabulary, "
+            "phrases, and context. Use one or two short conversational sentences, "
+            "introduce one target-language word or phrase slowly with its English "
+            "meaning, and ask the learner to repeat it."
         )
 
     async with agent.join(call):
