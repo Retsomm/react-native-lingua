@@ -7,6 +7,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from vision_agents.core import Agent, AgentLauncher, Runner, User
+from vision_agents.core.instructions import Instructions
 from vision_agents.core.utils.audio_filter import AudioFilter
 from vision_agents.plugins import getstream, openai
 
@@ -95,6 +96,26 @@ def sanitize_lesson_items(values: Any, key: str, limit: int = 4) -> list[str]:
     return items
 
 
+def as_mapping(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def get_call_custom_data(response: Any) -> dict[str, Any]:
+    data = getattr(response, "data", None)
+    call = getattr(data, "call", None)
+    custom = getattr(call, "custom", None)
+
+    return as_mapping(custom)
+
+
+def apply_agent_instructions(agent: Agent, instructions: str) -> None:
+    agent.instructions = Instructions(input_text=instructions)
+
+    realtime_session = getattr(agent.llm, "realtime_session", None)
+    if isinstance(realtime_session, dict):
+        realtime_session["instructions"] = agent.instructions.full_reference
+
+
 class PassthroughAudioFilter(AudioFilter):
     async def process_audio(self, pcm: Any, participant: Any) -> Any:
         return pcm
@@ -104,20 +125,37 @@ class PassthroughAudioFilter(AudioFilter):
 
 
 def build_teacher_instructions(**kwargs: Any) -> str:
-    lesson_data = kwargs.get("lesson")
-    lesson_payload = lesson_data if isinstance(lesson_data, dict) else {}
+    payload = as_mapping(kwargs.get("custom")) or kwargs
+    lesson_payload = as_mapping(payload.get("lesson"))
+    language_payload = as_mapping(payload.get("language"))
     language = sanitize_metadata(
-        kwargs.get("language_name") or kwargs.get("languageName"),
+        payload.get("language_name")
+        or payload.get("languageName")
+        or language_payload.get("name"),
         "the selected language",
     )
     lesson = sanitize_metadata(
-        kwargs.get("lesson_title") or kwargs.get("lessonTitle"),
+        payload.get("lesson_title")
+        or payload.get("lessonTitle")
+        or lesson_payload.get("title"),
         "the selected lesson",
     )
-    goals = sanitize_metadata_list(lesson_payload.get("goals"), [])
-    vocabulary = sanitize_lesson_items(lesson_payload.get("vocabulary"), "term")
-    phrases = sanitize_lesson_items(lesson_payload.get("phrases"), "phrase")
-    teacher_prompt = sanitize_metadata(lesson_payload.get("aiTeacherPrompt"), "")
+    goals = sanitize_metadata_list(
+        lesson_payload.get("goals") or payload.get("goals"),
+        [],
+    )
+    vocabulary = sanitize_lesson_items(
+        lesson_payload.get("vocabulary") or payload.get("vocabulary"),
+        "term",
+    )
+    phrases = sanitize_lesson_items(
+        lesson_payload.get("phrases") or payload.get("phrases"),
+        "phrase",
+    )
+    teacher_prompt = sanitize_metadata(
+        lesson_payload.get("aiTeacherPrompt") or payload.get("aiTeacherPrompt"),
+        "",
+    )
     lesson_context = [
         f"Lesson goals: {', '.join(goals)}." if goals else "",
         f"Vocabulary to practice: {', '.join(vocabulary)}." if vocabulary else "",
@@ -145,11 +183,12 @@ async def create_agent(**kwargs: Any) -> Agent:
     required_env("STREAM_API_KEY")
     required_env("STREAM_API_SECRET")
     required_env("OPENAI_API_KEY")
+    instructions = build_teacher_instructions(**kwargs)
 
-    return Agent(
+    agent = Agent(
         edge=getstream.Edge(),
         agent_user=User(name="Lingua AI Teacher", id="lingua-ai-teacher"),
-        instructions=build_teacher_instructions(**kwargs),
+        instructions=instructions,
         llm=openai.Realtime(
             model="gpt-realtime",
             voice="marin",
@@ -159,6 +198,9 @@ async def create_agent(**kwargs: Any) -> Agent:
         processors=[],
         multi_speaker_filter=PassthroughAudioFilter(),
     )
+    apply_agent_instructions(agent, instructions)
+
+    return agent
 
 
 async def join_call(
@@ -168,12 +210,24 @@ async def join_call(
     **kwargs: Any,
 ) -> None:
     call = await agent.create_call(call_type, call_id)
+    response = await call.get()
+    custom_data = get_call_custom_data(response)
+    opening_prompt = (
+        "Greet the learner in English, introduce yourself as their AI teacher, "
+        "and begin the first short speaking practice."
+    )
+
+    if custom_data:
+        lesson_instructions = build_teacher_instructions(custom=custom_data)
+        apply_agent_instructions(agent, lesson_instructions)
+        opening_prompt = (
+            f"{lesson_instructions}\n\n"
+            "Now greet the learner in English, introduce yourself as their AI teacher, "
+            "and begin the first short speaking practice from this lesson."
+        )
 
     async with agent.join(call):
-        await agent.simple_response(
-            "Greet the learner in English, introduce yourself as their AI teacher, "
-            "and begin the first short speaking practice.",
-        )
+        await agent.simple_response(opening_prompt)
         await agent.finish()
 
 

@@ -31,6 +31,8 @@ type AudioCallStatus =
   | "ended"
   | "error";
 
+type AgentConnectionStatus = "idle" | "connecting" | "connected" | "failed";
+
 type AudioCallResponse = {
   apiKey: string;
   callCid: string;
@@ -95,6 +97,8 @@ export function useStreamAudioCall({
   const [call, setCall] = useState<Call | null>(null);
   const [client, setClient] = useState<StreamVideoClient | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [agentConnectionStatus, setAgentConnectionStatus] =
+    useState<AgentConnectionStatus>("idle");
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [status, setStatus] = useState<AudioCallStatus>("idle");
@@ -124,6 +128,7 @@ export function useStreamAudioCall({
     }
 
     setErrorMessage(null);
+    setAgentConnectionStatus("idle");
     setStatus("starting");
 
     let streamCall: Call | null = null;
@@ -197,6 +202,7 @@ export function useStreamAudioCall({
       streamCall = streamClient.call(data.callType, data.callId);
 
       await streamCall.camera.disable();
+      setAgentConnectionStatus("connecting");
       setStatus("connecting-agent");
 
       const agentResponse = await fetch(getApiUrl("/api/vision-agent/session"), {
@@ -240,6 +246,7 @@ export function useStreamAudioCall({
       agentSessionRef.current = nextAgentSession;
       setStreamVideoProvider(() => StreamVideo);
       setAgentSessionId(agentData.sessionId);
+      setAgentConnectionStatus("connected");
       setClient(streamClient);
       setCall(streamCall);
       setStreamUser(data.user);
@@ -265,6 +272,7 @@ export function useStreamAudioCall({
       isStreamClientConnected = false;
       agentSessionRef.current = null;
       setAgentSessionId(null);
+      setAgentConnectionStatus("failed");
       setCall(null);
       setClient(null);
       setIsCameraOn(false);
@@ -380,6 +388,7 @@ export function useStreamAudioCall({
       await stopAgentSession(currentAgentSession).catch(() => undefined);
       agentSessionRef.current = null;
       setAgentSessionId(null);
+      setAgentConnectionStatus("idle");
     }
 
     if (!call) {
@@ -441,6 +450,7 @@ export function useStreamAudioCall({
     client,
     endCall,
     agentSessionId,
+    agentConnectionStatus,
     errorMessage,
     isCameraOn,
     isMuted,

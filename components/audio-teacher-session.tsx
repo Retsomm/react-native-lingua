@@ -122,6 +122,7 @@ function AudioTeacherSessionContent({
   const goal = lesson.goals[0] ?? lesson.description;
   const audioCall = useStreamAudioCall({ language, lesson, user });
   const statusCopy = getAudioCallCopy(audioCall.status, audioCall.errorMessage);
+  const agentStatusCopy = getAgentStatusCopy(audioCall.agentConnectionStatus);
   const isBusy =
     audioCall.status === "starting" ||
     audioCall.status === "connecting-agent" ||
@@ -287,6 +288,18 @@ function AudioTeacherSessionContent({
                 {audioCall.isMuted ? "Muted" : audioCall.status === "joined" ? "Live" : "Audio"}
               </Text>
             </View>
+          </View>
+          <View className="mt-[14px] flex-row items-center rounded-[16px] bg-[#F7F8FC] px-[14px] py-[11px]">
+            <View
+              className="h-[10px] w-[10px] rounded-full"
+              style={{ backgroundColor: agentStatusCopy.color }}
+            />
+            <Text className="ml-[9px] font-poppins-semibold text-[13px] leading-[18px] text-lingua-text-primary">
+              AI teacher
+            </Text>
+            <Text className="ml-[7px] flex-1 font-poppins-medium text-[13px] leading-[18px] text-[#68718D]">
+              {agentStatusCopy.label}
+            </Text>
           </View>
         </View>
 
@@ -594,6 +607,21 @@ function getAudioCallCopy(
         prompt: undefined,
         status,
       };
+  }
+}
+
+function getAgentStatusCopy(
+  status: "idle" | "connecting" | "connected" | "failed",
+) {
+  switch (status) {
+    case "connecting":
+      return { color: "#FFB020", label: "connecting" };
+    case "connected":
+      return { color: "#19D229", label: "connected" };
+    case "failed":
+      return { color: "#FF3F46", label: "failed" };
+    default:
+      return { color: "#8B93A8", label: "idle" };
   }
 }
 

@@ -21,7 +21,7 @@ type AudioCallRequest = {
   };
 };
 
-const callType = "default";
+const callType = "audio_room";
 const agentUserId = "lingua-ai-teacher";
 
 function cleanId(value: string) {
@@ -127,10 +127,18 @@ export async function POST(request: Request) {
         custom: {
           languageId,
           languageName: body.languageName ?? languageId,
-          lesson: body.lesson,
+          language: {
+            id: languageId,
+            name: body.languageName ?? languageId,
+          },
+          lesson: {
+            ...(body.lesson ?? {}),
+            id: lessonId,
+            title: body.lessonTitle ?? lessonId,
+          },
           lessonId,
           lessonTitle: body.lessonTitle ?? lessonId,
-          mode: "video-lesson",
+          mode: "audio-lesson",
         },
         members: [
           { role: "call_member", user_id: safeUserId },
@@ -139,6 +147,7 @@ export async function POST(request: Request) {
         video: true,
       },
     });
+    await call.goLive();
 
     const token = client.generateCallToken({
       call_cids: [callCid],
