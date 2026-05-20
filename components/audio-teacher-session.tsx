@@ -1,13 +1,13 @@
 import { images } from "@/constants/images";
 import { languages } from "@/data/languages";
 import { useStreamAudioCall } from "@/hooks/useStreamAudioCall";
+import type { LiveCaption } from "@/hooks/useStreamAudioCall";
 import type { Lesson } from "@/types/learning";
 import { useUser } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import type { Href } from "expo-router";
 import {
-  Alert,
   Image,
   ImageBackground,
   Pressable,
@@ -17,7 +17,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -26,9 +26,11 @@ type LessonControlProps = {
   disabled?: boolean;
   iconName: IoniconName;
   iconSize: number;
+  isActive?: boolean;
   isDestructive?: boolean;
   label: string;
   onPress?: () => void;
+  tone?: "call" | "speak";
 };
 
 const feedbackMetrics = [
@@ -113,6 +115,9 @@ function AudioTeacherSessionContent({
   const insets = useSafeAreaInsets();
   const { user } = useUser();
   const didAutoStartCallRef = useRef(false);
+  const chatScrollViewRef = useRef<ScrollView | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isTogglingSpeaking, setIsTogglingSpeaking] = useState(false);
   const { width } = useWindowDimensions();
   const language = languages.find((item) => item.id === lesson.languageId);
   const previewHeight = Math.min(610, Math.max(540, width * 1.43));
@@ -121,8 +126,21 @@ function AudioTeacherSessionContent({
   const languageName = language?.name ?? "Language";
   const goal = lesson.goals[0] ?? lesson.description;
   const audioCall = useStreamAudioCall({ language, lesson, user });
-  const statusCopy = getAudioCallCopy(audioCall.status, audioCall.errorMessage);
+  const statusCopy = getAudioCallCopy(
+    audioCall.status,
+    audioCall.errorMessage,
+    isSpeaking,
+  );
   const agentStatusCopy = getAgentStatusCopy(audioCall.agentConnectionStatus);
+  const chatCaptions = getChatCaptions(
+    audioCall.liveCaptions,
+    statusCopy.prompt ??
+      primaryPhrase?.translation ??
+      primaryPhrase?.phrase ??
+      "Repeat after me.",
+  );
+  const latestChatCaption = chatCaptions.at(-1);
+  const chatCaptionSignature = `${chatCaptions.length}:${latestChatCaption?.id ?? ""}:${latestChatCaption?.text ?? ""}`;
   const isBusy =
     audioCall.status === "starting" ||
     audioCall.status === "connecting-agent" ||
@@ -135,57 +153,83 @@ function AudioTeacherSessionContent({
     audioCall.status === "ended" ||
     audioCall.status === "error";
   const isInCall = audioCall.status === "joined";
+  const canEndCall =
+    audioCall.status !== "idle" &&
+    audioCall.status !== "ended" &&
+    audioCall.status !== "error";
+  const hasTriggeredCall = audioCall.status !== "idle";
   const userName =
     audioCall.streamUser?.name ??
     user?.fullName ??
     user?.primaryEmailAddress?.emailAddress ??
     "Signed-in learner";
 
-  const startOrJoinCall = () => {
-    if (isBusy) {
-      return;
-    }
-
-    if (canJoin) {
-      audioCall.joinCall();
-      return;
-    }
-
-    if (canStart) {
-      audioCall.joinCall();
-    }
-  };
-
-  const showCallStatus = () => {
-    if (isBusy) {
-      return;
-    }
-
-    if (canJoin || canStart) {
-      startOrJoinCall();
-      return;
-    }
-
-    Alert.alert(statusCopy.header, statusCopy.body);
-  };
-
   const toggleCall = async () => {
-    if (isBusy) {
+    if (audioCall.status === "ending") {
       return;
     }
 
-    if (isInCall) {
+    if (canEndCall) {
+      setIsSpeaking(false);
+      try {
+        await audioCall.stopSpeaking();
+      } catch (error) {
+        console.error("Failed to stop speaking before ending call", error);
+      }
+
       await audioCall.endCall();
       onCallEnded?.();
       return;
     }
 
-    audioCall.joinCall();
+    if (!isBusy && (canStart || canJoin)) {
+      audioCall.joinCall({ muted: true });
+    }
+  };
+
+  const toggleSpeaking = async () => {
+    if (!isInCall || isBusy || isTogglingSpeaking) {
+      return;
+    }
+
+    const nextSpeaking = !isSpeaking;
+    setIsTogglingSpeaking(true);
+
+    try {
+      if (nextSpeaking) {
+        await audioCall.startSpeaking();
+      } else {
+        await audioCall.stopSpeaking();
+      }
+
+      setIsSpeaking(nextSpeaking);
+    } catch (error) {
+      console.error("Failed to toggle speaking", error);
+    } finally {
+      setIsTogglingSpeaking(false);
+    }
   };
 
   useEffect(() => {
     didAutoStartCallRef.current = false;
+    setIsSpeaking(false);
   }, [lesson.id]);
+
+  useEffect(() => {
+    if (!isInCall) {
+      setIsSpeaking(false);
+    }
+  }, [isInCall]);
+
+  useEffect(() => {
+    if (!hasTriggeredCall) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      chatScrollViewRef.current?.scrollToEnd({ animated: true });
+    });
+  }, [chatCaptionSignature, hasTriggeredCall]);
 
   useEffect(() => {
     if (
@@ -198,7 +242,7 @@ function AudioTeacherSessionContent({
     }
 
     didAutoStartCallRef.current = true;
-    audioCall.joinCall();
+    audioCall.joinCall({ muted: true });
   }, [audioCall, autoStartCall, user]);
 
   const content = (
@@ -312,65 +356,49 @@ function AudioTeacherSessionContent({
         >
           <View className="absolute inset-0 bg-black/10" />
 
-          <Image
-            source={images.aiTeacherFoxSweater}
-            className="absolute bottom-[150px] left-[-18px] h-[400px] w-[350px]"
-            resizeMode="contain"
-            style={styles.previewMascot}
-          />
-
-          <View
-            className="absolute bottom-[178px] left-[72px] right-[52px] flex-row items-center rounded-[24px] bg-white px-[24px] py-[20px]"
-            style={styles.responseBubble}
-          >
-            <Text
-              className="flex-1 font-poppins-semibold text-[20px] leading-[28px] text-lingua-text-primary"
-              numberOfLines={2}
+          {hasTriggeredCall ? (
+            <ScrollView
+              contentContainerStyle={styles.chatTranscriptContent}
+              onContentSizeChange={() => {
+                chatScrollViewRef.current?.scrollToEnd({ animated: true });
+              }}
+              ref={chatScrollViewRef}
+              showsVerticalScrollIndicator={false}
+              style={styles.chatTranscript}
             >
-              {statusCopy.prompt ??
-                primaryPhrase?.translation ??
-                primaryPhrase?.phrase ??
-                "Repeat after me."}
-            </Text>
-            <Ionicons name="volume-high" size={30} color="#5B3BF6" />
-            <View className="absolute bottom-[-19px] right-[28px] h-0 w-0 border-l-[22px] border-t-[22px] border-l-transparent border-t-white" />
-          </View>
-
-          <View
-            className="absolute bottom-[42px] left-0 right-0 flex-row justify-between px-[20px]"
-            style={styles.controlsRow}
-          >
-            <LessonControl
-              disabled={isBusy}
-              iconName={audioCall.isCameraOn ? "videocam" : "videocam-off"}
-              iconSize={35}
-              label="Camera"
-              onPress={audioCall.toggleCamera}
-            />
-            <LessonControl
-              disabled={isBusy}
-              iconName={audioCall.isMuted ? "mic-off" : "mic"}
-              iconSize={35}
-              label={audioCall.isMuted ? "Unmute" : "Mic"}
-              onPress={audioCall.toggleMute}
-            />
-            <LessonControl
-              disabled={isBusy}
-              iconName="language"
-              iconSize={34}
-              label="Status"
-              onPress={showCallStatus}
-            />
-            <LessonControl
-              disabled={isBusy || (!isInCall && !canJoin && !canStart)}
-              iconName="call"
-              iconSize={35}
-              isDestructive
-              label={isInCall ? "End Call" : "Call"}
-              onPress={toggleCall}
-            />
-          </View>
+              {chatCaptions.map((caption) => (
+                <ChatCaptionBubble key={caption.id} caption={caption} />
+              ))}
+            </ScrollView>
+          ) : null}
         </ImageBackground>
+
+        <View
+          className="mt-[18px] flex-row justify-center gap-[22px]"
+          style={styles.controlsRow}
+        >
+          <LessonControl
+            disabled={
+              audioCall.status === "ending" ||
+              (!canEndCall && (isBusy || (!canJoin && !canStart)))
+            }
+            iconName="call"
+            iconSize={38}
+            isActive={canEndCall}
+            label={canEndCall ? "End" : "Call"}
+            onPress={toggleCall}
+            tone="call"
+          />
+          <LessonControl
+            disabled={!isInCall || isBusy || isTogglingSpeaking}
+            iconName={isSpeaking ? "send" : "mic"}
+            iconSize={34}
+            isActive={isSpeaking}
+            label={isSpeaking ? "Send" : "Speak"}
+            onPress={toggleSpeaking}
+            tone="speak"
+          />
+        </View>
 
         <View className="mt-[20px] gap-[16px] rounded-[24px] bg-white px-[24px] py-[22px]" style={styles.feedbackCard}>
           {feedbackMetrics.map((metric, index) => (
@@ -487,10 +515,13 @@ function LessonControl({
   disabled = false,
   iconName,
   iconSize,
-  isDestructive,
+  isActive = false,
   label,
   onPress,
+  tone = "call",
 }: LessonControlProps) {
+  const colors = getLessonControlColors(tone, isActive);
+
   return (
     <Pressable
       accessibilityLabel={label}
@@ -505,20 +536,101 @@ function LessonControl({
       style={({ pressed }) => pressed && styles.pressed}
     >
       <View
-        className={`h-[72px] w-[72px] items-center justify-center rounded-full ${
-          isDestructive ? "bg-[#FF3F46]" : "bg-white"
-        }`}
-        style={[styles.controlButton, disabled && styles.disabledControlButton]}
+        className="h-[72px] w-[72px] items-center justify-center rounded-full"
+        style={[
+          styles.controlButton,
+          { backgroundColor: colors.backgroundColor, borderColor: colors.borderColor },
+          disabled && styles.disabledControlButton,
+        ]}
       >
-        <Ionicons name={iconName} size={iconSize} color={isDestructive ? "#FFFFFF" : "#07133A"} />
+        <Ionicons name={iconName} size={iconSize} color={colors.iconColor} />
       </View>
       <Text
-        className="mt-[10px] text-center font-poppins-semibold text-[15px] leading-[20px] text-white"
+        className="mt-[10px] text-center font-poppins-semibold text-[15px] leading-[20px]"
         numberOfLines={1}
+        style={{ color: colors.labelColor }}
       >
         {label}
       </Text>
     </Pressable>
+  );
+}
+
+function getLessonControlColors(
+  tone: "call" | "speak",
+  isActive: boolean,
+) {
+  if (tone === "speak") {
+    return isActive
+      ? {
+          backgroundColor: "#19D229",
+          borderColor: "#19D229",
+          iconColor: "#FFFFFF",
+          labelColor: "#12851D",
+        }
+      : {
+          backgroundColor: "#FFFFFF",
+          borderColor: "#E4E7F1",
+          iconColor: "#07133A",
+          labelColor: "#0D132B",
+        };
+  }
+
+  return isActive
+    ? {
+        backgroundColor: "#FF3F46",
+        borderColor: "#FF3F46",
+        iconColor: "#FFFFFF",
+        labelColor: "#D92830",
+      }
+    : {
+        backgroundColor: "#5B3BF6",
+        borderColor: "#5B3BF6",
+        iconColor: "#FFFFFF",
+        labelColor: "#4D32D2",
+      };
+}
+
+type ChatCaption = LiveCaption & {
+  isPlaceholder?: boolean;
+};
+
+type ChatCaptionBubbleProps = {
+  caption: ChatCaption;
+};
+
+function ChatCaptionBubble({ caption }: ChatCaptionBubbleProps) {
+  const isTeacher = caption.role === "teacher";
+
+  return (
+    <View
+      className={`mb-[13px] flex-row items-end ${
+        isTeacher ? "justify-start" : "justify-end"
+      }`}
+    >
+      {isTeacher ? (
+        <Image
+          source={images.aiTeacherFoxSweater}
+          className="mr-[8px] h-[34px] w-[34px] rounded-full bg-white"
+          resizeMode="cover"
+        />
+      ) : null}
+
+      <View
+        className={`max-w-[78%] rounded-[20px] px-[16px] py-[12px] ${
+          isTeacher ? "rounded-bl-[6px] bg-white" : "rounded-br-[6px] bg-[#5B3BF6]"
+        }`}
+        style={styles.chatBubble}
+      >
+        <Text
+          className={`font-poppins-semibold text-[15px] leading-[22px] ${
+            isTeacher ? "text-lingua-text-primary" : "text-white"
+          } ${caption.isPlaceholder ? "opacity-70" : ""}`}
+        >
+          {caption.text}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -535,6 +647,7 @@ function getAudioCallCopy(
     | "ended"
     | "error",
   errorMessage: string | null,
+  isSpeaking: boolean,
 ) {
   switch (status) {
     case "starting":
@@ -553,9 +666,9 @@ function getAudioCallCopy(
       };
     case "ready":
       return {
-        body: "Audio session ready. Tap Join to connect your microphone.",
+        body: "Audio session ready. Tap Call to start with your teacher.",
         header: "Ready",
-        prompt: "Session ready. Join when you are ready.",
+        prompt: "Session ready. Tap Call when you are ready.",
         status,
       };
     case "joining":
@@ -567,14 +680,16 @@ function getAudioCallCopy(
       };
     case "joined":
       return {
-        body: "You are in the audio lesson. Use Mic to mute or unmute.",
+        body: isSpeaking
+          ? "Listening now. Tap Send when you finish speaking."
+          : "You are in the lesson. Tap Speak, then tap Send when you finish.",
         header: "Live",
-        prompt: "Great. Repeat after me.",
+        prompt: isSpeaking ? "Speak now, then tap Send." : "Tap Speak to answer.",
         status,
       };
     case "muting":
       return {
-        body: "Updating your audio and video controls.",
+        body: "Updating your Speak and Send controls.",
         header: "Updating",
         prompt: "Updating controls...",
         status,
@@ -588,7 +703,7 @@ function getAudioCallCopy(
       };
     case "ended":
       return {
-        body: "Audio call ended. Start again to create a new session.",
+        body: "Audio call ended. Tap Call to create a new session.",
         header: "Ended",
         prompt: "Call ended. Nice practice.",
         status,
@@ -623,6 +738,24 @@ function getAgentStatusCopy(
     default:
       return { color: "#8B93A8", label: "idle" };
   }
+}
+
+function getChatCaptions(captions: LiveCaption[], fallbackText: string) {
+  if (captions.length > 0) {
+    return captions.slice(-8);
+  }
+
+  return [
+    {
+      createdAt: Date.now(),
+      id: "teacher-placeholder",
+      isPlaceholder: true,
+      role: "teacher" as const,
+      speakerId: "lingua-ai-teacher",
+      speakerName: "AI Teacher",
+      text: fallbackText,
+    },
+  ];
 }
 
 type LessonTabBarProps = {
@@ -679,6 +812,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   controlButton: {
+    borderWidth: 1,
     shadowColor: "#0D132B",
     shadowOffset: { height: 8, width: 0 },
     shadowOpacity: 0.1,
@@ -707,21 +841,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 10,
   },
+  chatBubble: {
+    shadowColor: "#0D132B",
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+  },
+  chatTranscript: {
+    bottom: 18,
+    left: 16,
+    position: "absolute",
+    right: 16,
+    top: 18,
+    zIndex: 4,
+  },
+  chatTranscriptContent: {
+    paddingBottom: 10,
+    paddingTop: 4,
+  },
   pressed: {
     opacity: 0.72,
   },
   previewHeader: {
     zIndex: 3,
-  },
-  previewMascot: {
-    zIndex: 1,
-  },
-  responseBubble: {
-    shadowColor: "#0D132B",
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    zIndex: 4,
   },
   controlsRow: {
     zIndex: 5,

@@ -4,11 +4,7 @@ import type {
   Call,
   StreamVideoClient,
   User,
-} from "@stream-io/video-react-native-sdk";
-import {
-  StreamVideo,
-  StreamVideoClient as StreamVideoClientClass,
-} from "@stream-io/video-react-native-sdk";
+} from "@stream-io/video-client";
 import {
   useCallback,
   useEffect,
@@ -18,6 +14,7 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react";
+import { Platform } from "react-native";
 
 type AudioCallStatus =
   | "idle"
@@ -32,6 +29,17 @@ type AudioCallStatus =
   | "error";
 
 type AgentConnectionStatus = "idle" | "connecting" | "connected" | "failed";
+type CaptionStatus = "idle" | "starting" | "live" | "unavailable" | "error";
+type LiveCaptionRole = "teacher" | "learner";
+
+export type LiveCaption = {
+  createdAt: number;
+  id: string;
+  role: LiveCaptionRole;
+  speakerId: string;
+  speakerName: string;
+  text: string;
+};
 
 type AudioCallResponse = {
   apiKey: string;
@@ -46,8 +54,22 @@ type AudioCallResponse = {
   };
 };
 
+type AudioCallDescriptor = Pick<AudioCallResponse, "callId" | "callType">;
+
 type AgentSessionResponse = {
   sessionId: string;
+};
+
+type CaptionsResponse = {
+  captions?: BufferedCaption[];
+};
+
+type BufferedCaption = {
+  createdAt?: number;
+  id?: string;
+  role?: "assistant" | "user";
+  speakerId?: string;
+  text?: string;
 };
 
 type StreamVideoProvider = ComponentType<{
@@ -76,6 +98,9 @@ type JoinCallOptions = {
   muted?: boolean;
 };
 
+const maxCaptionHistory = 8;
+const captionPollIntervalMs = 1000;
+
 function isAudioCallResponse(
   data: AudioCallResponse | { error?: string },
 ): data is AudioCallResponse {
@@ -86,6 +111,24 @@ function isAgentSessionResponse(
   data: AgentSessionResponse | { error?: string },
 ): data is AgentSessionResponse {
   return "sessionId" in data;
+}
+
+function isLiveCaptionEventPayload(
+  value: Record<string, unknown>,
+): value is {
+  captionId?: string;
+  role?: "assistant" | "user";
+  speakerId?: string;
+  text?: string;
+  type: "lingua.live_caption";
+} {
+  return value.type === "lingua.live_caption" && typeof value.text === "string";
+}
+
+function getCustomEventPayload(value: unknown) {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 export function useStreamAudioCall({
@@ -99,8 +142,14 @@ export function useStreamAudioCall({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [agentConnectionStatus, setAgentConnectionStatus] =
     useState<AgentConnectionStatus>("idle");
+  const [captionErrorMessage, setCaptionErrorMessage] = useState<string | null>(
+    null,
+  );
+  const [captionStatus, setCaptionStatus] = useState<CaptionStatus>("idle");
+  const [activeCallId, setActiveCallId] = useState<string | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [liveCaptions, setLiveCaptions] = useState<LiveCaption[]>([]);
   const [status, setStatus] = useState<AudioCallStatus>("idle");
   const [StreamVideoProvider, setStreamVideoProvider] =
     useState<StreamVideoProvider | null>(null);
@@ -111,6 +160,8 @@ export function useStreamAudioCall({
     callId: string;
     sessionId: string;
   } | null>(null);
+  const callDescriptorRef = useRef<AudioCallDescriptor | null>(null);
+  const captionUnsubscribeRef = useRef<(() => void) | null>(null);
 
   const clerkUserName = useMemo(() => {
     if (!user) {
@@ -128,17 +179,16 @@ export function useStreamAudioCall({
     }
 
     setErrorMessage(null);
+    setCaptionErrorMessage(null);
+    setCaptionStatus("idle");
+    setLiveCaptions([]);
     setAgentConnectionStatus("idle");
     setStatus("starting");
+    captionUnsubscribeRef.current?.();
+    captionUnsubscribeRef.current = null;
 
     let streamCall: Call | null = null;
     let streamClient: StreamVideoClient | null = null;
-    let nextAgentSession:
-      | {
-          callId: string;
-          sessionId: string;
-        }
-      | null = null;
     let isStreamClientConnected = false;
 
     try {
@@ -196,19 +246,109 @@ export function useStreamAudioCall({
       await call?.leave().catch(() => undefined);
       await client?.disconnectUser().catch(() => undefined);
 
-      streamClient = new StreamVideoClientClass(data.apiKey);
+      if (Platform.OS === "web") {
+        const { StreamVideoClient: StreamVideoClientClass } = await import(
+          "@stream-io/video-client"
+        );
+
+        streamClient = new StreamVideoClientClass(data.apiKey);
+        setStreamVideoProvider(null);
+      } else {
+        const { StreamVideo, StreamVideoClient: StreamVideoClientClass } =
+          await import("@stream-io/video-react-native-sdk");
+
+        streamClient = new StreamVideoClientClass(data.apiKey);
+        setStreamVideoProvider(() => StreamVideo);
+      }
+
       await streamClient.connectUser(streamUserData, data.token);
       isStreamClientConnected = true;
       streamCall = streamClient.call(data.callType, data.callId);
+      callDescriptorRef.current = {
+        callId: data.callId,
+        callType: data.callType,
+      };
+      setActiveCallId(data.callId);
+      const addCustomCaption = (custom: unknown) => {
+        const payload = getCustomEventPayload(custom);
+
+        if (!payload || !isLiveCaptionEventPayload(payload)) {
+          return;
+        }
+
+        setLiveCaptions((currentCaptions) =>
+          getNextCustomEventCaptions(currentCaptions, payload),
+        );
+      };
+      const callCustomEventUnsubscribe = streamCall.on("custom", (event) => {
+        addCustomCaption(event.custom);
+      });
+      const clientCustomEventUnsubscribe = streamClient.on("custom", (event) => {
+        if ("call_cid" in event && event.call_cid !== data.callCid) {
+          return;
+        }
+
+        addCustomCaption(event.custom);
+      });
+      captionUnsubscribeRef.current = () => {
+        callCustomEventUnsubscribe();
+        clientCustomEventUnsubscribe();
+      };
 
       await streamCall.camera.disable();
-      setAgentConnectionStatus("connecting");
-      setStatus("connecting-agent");
+      setClient(streamClient);
+      setCall(streamCall);
+      setStreamUser(data.user);
+      setIsCameraOn(false);
+      setIsMuted(false);
+      setStatus("ready");
 
+      return streamCall;
+    } catch (error) {
+      await streamCall?.leave().catch(() => undefined);
+
+      if (isStreamClientConnected) {
+        await streamClient?.disconnectUser().catch(() => undefined);
+      }
+
+      streamCall = null;
+      streamClient = null;
+      isStreamClientConnected = false;
+      agentSessionRef.current = null;
+      callDescriptorRef.current = null;
+      setActiveCallId(null);
+      setAgentSessionId(null);
+      setAgentConnectionStatus("failed");
+      captionUnsubscribeRef.current?.();
+      captionUnsubscribeRef.current = null;
+      setCall(null);
+      setClient(null);
+      setCaptionStatus("error");
+      setIsCameraOn(false);
+      setIsMuted(false);
+
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to create audio session.",
+      );
+      setStatus("error");
+      return null;
+    }
+  }, [call, clerkUserName, client, language, lesson, user]);
+
+  const connectAgentSession = useCallback(async () => {
+    const descriptor = callDescriptorRef.current;
+
+    if (!descriptor || agentSessionRef.current) {
+      return true;
+    }
+
+    setAgentConnectionStatus("connecting");
+
+    try {
       const agentResponse = await fetch(getApiUrl("/api/vision-agent/session"), {
         body: JSON.stringify({
-          callId: data.callId,
-          callType: data.callType,
+          callId: descriptor.callId,
+          callType: descriptor.callType,
           languageId: language?.id ?? lesson.languageId,
           languageName: language?.name,
           lesson: {
@@ -239,52 +379,23 @@ export function useStreamAudioCall({
         );
       }
 
-      nextAgentSession = {
-        callId: data.callId,
+      agentSessionRef.current = {
+        callId: descriptor.callId,
         sessionId: agentData.sessionId,
       };
-      agentSessionRef.current = nextAgentSession;
-      setStreamVideoProvider(() => StreamVideo);
       setAgentSessionId(agentData.sessionId);
       setAgentConnectionStatus("connected");
-      setClient(streamClient);
-      setCall(streamCall);
-      setStreamUser(data.user);
-      setIsCameraOn(false);
-      setIsMuted(false);
-      setStatus("ready");
-
-      return streamCall;
+      return true;
     } catch (error) {
-      if (nextAgentSession) {
-        await stopAgentSession(nextAgentSession).catch(() => undefined);
-      }
-
-      await streamCall?.leave().catch(() => undefined);
-
-      if (isStreamClientConnected) {
-        await streamClient?.disconnectUser().catch(() => undefined);
-      }
-
-      nextAgentSession = null;
-      streamCall = null;
-      streamClient = null;
-      isStreamClientConnected = false;
-      agentSessionRef.current = null;
-      setAgentSessionId(null);
       setAgentConnectionStatus("failed");
-      setCall(null);
-      setClient(null);
-      setIsCameraOn(false);
-      setIsMuted(false);
-
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to create audio session.",
+        error instanceof Error
+          ? error.message
+          : "Unable to connect the AI teacher.",
       );
-      setStatus("error");
-      return null;
+      return false;
     }
-  }, [call, clerkUserName, client, language, lesson, user]);
+  }, [language, lesson]);
 
   const joinCall = useCallback(async (options: JoinCallOptions = {}) => {
     const activeCall = call ?? (await startCall());
@@ -313,13 +424,25 @@ export function useStreamAudioCall({
       setIsCameraOn(Boolean(options.cameraEnabled));
       setIsMuted(Boolean(options.muted));
       setStatus("joined");
+
+      setCaptionErrorMessage(null);
+      setCaptionStatus("starting");
+
+      const didConnectAgent = await connectAgentSession();
+
+      if (didConnectAgent) {
+        setCaptionStatus("live");
+      } else {
+        setCaptionErrorMessage("Unable to connect live transcript captions.");
+        setCaptionStatus("error");
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to join audio call.",
       );
       setStatus("error");
     }
-  }, [call, startCall]);
+  }, [call, connectAgentSession, startCall]);
 
   const toggleMute = useCallback(async () => {
     if (status !== "joined") {
@@ -350,6 +473,35 @@ export function useStreamAudioCall({
       setStatus("error");
     }
   }, [call, isMuted, joinCall, status]);
+
+  const setMicrophoneEnabled = useCallback(async (enabled: boolean) => {
+    if (!call || status !== "joined") {
+      return;
+    }
+
+    try {
+      if (enabled) {
+        await call.microphone.enable();
+      } else {
+        await call.microphone.disable();
+      }
+
+      setIsMuted(!enabled);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to update microphone.",
+      );
+      setStatus("error");
+    }
+  }, [call, status]);
+
+  const startSpeaking = useCallback(async () => {
+    await setMicrophoneEnabled(true);
+  }, [setMicrophoneEnabled]);
+
+  const stopSpeaking = useCallback(async () => {
+    await setMicrophoneEnabled(false);
+  }, [setMicrophoneEnabled]);
 
   const toggleCamera = useCallback(async () => {
     if (status !== "joined") {
@@ -387,6 +539,7 @@ export function useStreamAudioCall({
     if (currentAgentSession) {
       await stopAgentSession(currentAgentSession).catch(() => undefined);
       agentSessionRef.current = null;
+      callDescriptorRef.current = null;
       setAgentSessionId(null);
       setAgentConnectionStatus("idle");
     }
@@ -411,8 +564,14 @@ export function useStreamAudioCall({
     } finally {
       await call.leave().catch(() => undefined);
       await client?.disconnectUser().catch(() => undefined);
+      captionUnsubscribeRef.current?.();
+      captionUnsubscribeRef.current = null;
       setCall(null);
       setClient(null);
+      callDescriptorRef.current = null;
+      setActiveCallId(null);
+      setLiveCaptions([]);
+      setCaptionStatus("idle");
       setIsCameraOn(false);
       setIsMuted(false);
 
@@ -425,6 +584,8 @@ export function useStreamAudioCall({
   useEffect(() => {
     return () => {
       call?.leave().catch(() => undefined);
+      captionUnsubscribeRef.current?.();
+      captionUnsubscribeRef.current = null;
     };
   }, [call]);
 
@@ -442,8 +603,71 @@ export function useStreamAudioCall({
         stopAgentSession(currentAgentSession).catch(() => undefined);
         agentSessionRef.current = null;
       }
+
+      callDescriptorRef.current = null;
+      setActiveCallId(null);
+      captionUnsubscribeRef.current?.();
+      captionUnsubscribeRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeCallId || !agentSessionId) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const loadCaptions = async () => {
+      let lastCaptionAt = 0;
+
+      while (!controller.signal.aborted) {
+        try {
+          const response = await fetch(
+            getApiUrl(
+              `/api/vision-agent/captions?callId=${encodeURIComponent(activeCallId)}&after=${lastCaptionAt}`,
+            ),
+            { signal: controller.signal },
+          );
+
+          if (!response.ok) {
+            await wait(1000, controller.signal);
+            continue;
+          }
+
+          const data = (await response.json()) as CaptionsResponse;
+          const captions = data.captions ?? [];
+
+          if (captions.length > 0) {
+            captions.forEach((caption) => {
+              if (caption.createdAt && caption.createdAt > lastCaptionAt) {
+                lastCaptionAt = caption.createdAt;
+              }
+            });
+
+            setLiveCaptions((currentCaptions) =>
+              captions.reduce(getNextBufferedCaption, currentCaptions),
+            );
+          }
+
+          await wait(captionPollIntervalMs, controller.signal);
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          // Captions are best-effort and should never interrupt the lesson audio.
+          await wait(captionPollIntervalMs, controller.signal);
+        }
+      }
+    };
+
+    loadCaptions();
+
+    return () => {
+      controller.abort();
+    };
+  }, [activeCallId, agentSessionId]);
 
   return {
     call,
@@ -451,17 +675,88 @@ export function useStreamAudioCall({
     endCall,
     agentSessionId,
     agentConnectionStatus,
+    captionErrorMessage,
+    captionStatus,
     errorMessage,
     isCameraOn,
     isMuted,
     joinCall,
+    liveCaptions,
     startCall,
+    startSpeaking,
     status,
+    stopSpeaking,
     StreamVideoProvider,
     streamUser,
     toggleCamera,
     toggleMute,
   };
+}
+
+function getNextCustomEventCaptions(
+  currentCaptions: LiveCaption[],
+  payload: {
+    captionId?: string;
+    role?: "assistant" | "user";
+    speakerId?: string;
+    text?: string;
+  },
+) {
+  const text = payload.text?.trim();
+
+  if (!text) {
+    return currentCaptions;
+  }
+
+  const role: LiveCaptionRole = payload.role === "assistant" ? "teacher" : "learner";
+  const liveCaption: LiveCaption = {
+    createdAt: Date.now(),
+    id: payload.captionId || `${payload.speakerId ?? role}-${Date.now()}`,
+    role,
+    speakerId: payload.speakerId ?? role,
+    speakerName: role === "teacher" ? "AI Teacher" : "You",
+    text,
+  };
+  const withoutCurrentCaption = currentCaptions.filter(
+    (item) => item.id !== liveCaption.id,
+  );
+
+  return [...withoutCurrentCaption, liveCaption].slice(-maxCaptionHistory);
+}
+
+function getNextBufferedCaption(
+  currentCaptions: LiveCaption[],
+  caption: BufferedCaption,
+) {
+  return getNextCustomEventCaptions(currentCaptions, {
+    ...caption,
+    captionId: caption.id,
+  });
+}
+
+function wait(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+
+    const onAbort = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+
+    const timeout = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+
+    signal.addEventListener(
+      "abort",
+      onAbort,
+      { once: true },
+    );
+  });
 }
 
 async function stopAgentSession(session: { callId: string; sessionId: string }) {
