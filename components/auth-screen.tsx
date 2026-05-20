@@ -1,4 +1,6 @@
 import { images } from "@/constants/images";
+import { identifyPostHogUser } from "@/lib/analytics";
+import { useLanguageStore } from "@/store/UseLanguageStore";
 import { useAuth, useSignIn, useSignUp, useSSO } from "@clerk/expo";
 import {
   AntDesign,
@@ -121,8 +123,9 @@ export function AuthScreen({ mode }: AuthScreenProps) {
   const { signIn, fetchStatus: signInStatus } = useSignIn();
   const { signUp, fetchStatus: signUpStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
-  const { userId } = useAuth();
+  const { userId: authUserId } = useAuth();
   const posthog = usePostHog();
+  const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
@@ -230,10 +233,12 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           return;
         }
 
-        const userId = signUp.createdUserId;
-        if (userId) {
-          posthog.identify(userId, {
-            $set_once: { sign_up_date: new Date().toISOString() },
+        const newUserId = signUp.createdUserId;
+        if (newUserId) {
+          identifyPostHogUser({
+            isSignUp: true,
+            preferredLanguageId: selectedLanguageId,
+            userId: newUserId,
           });
         }
         posthog.capture("sign_up_completed");
@@ -261,9 +266,12 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           return;
         }
 
-        const userId = getStableUserId(signIn);
-        if (userId) {
-          posthog.identify(userId);
+        const signedInUserId = getStableUserId(signIn);
+        if (signedInUserId) {
+          identifyPostHogUser({
+            preferredLanguageId: selectedLanguageId,
+            userId: signedInUserId,
+          });
         }
         posthog.capture("sign_in_completed");
       }
@@ -310,8 +318,15 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
       if (sessionId) {
         await setActive?.({ session: sessionId });
-        if (userId) {
-          posthog.identify(userId);
+        const completedUserId =
+          getStableUserId(ssoSignUp) ?? getStableUserId(ssoSignIn) ?? authUserId;
+
+        if (completedUserId) {
+          identifyPostHogUser({
+            isSignUp: Boolean(ssoSignUp?.createdUserId),
+            preferredLanguageId: selectedLanguageId,
+            userId: completedUserId,
+          });
         }
         posthog.capture("social_auth_completed", { strategy, auth_mode: mode });
         router.replace("/");

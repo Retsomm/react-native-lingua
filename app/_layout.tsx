@@ -1,6 +1,6 @@
 import "../global.css";
 
-import { ClerkProvider } from "@clerk/expo";
+import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { useFonts } from "expo-font";
 import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
@@ -8,7 +8,9 @@ import * as SplashScreen from "expo-splash-screen";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef } from "react";
 import { PostHogProvider } from "posthog-react-native";
+import { identifyPostHogUser } from "@/lib/analytics";
 import { posthog } from "@/lib/posthog";
+import { useLanguageStore } from "@/store/UseLanguageStore";
 
 SplashScreen.preventAutoHideAsync();
 WebBrowser.maybeCompleteAuthSession();
@@ -31,6 +33,33 @@ function getSafeSearchParams(params: Record<string, unknown>) {
       return typeof value === "string" || Array.isArray(value);
     }),
   );
+}
+
+function PostHogUserIdentifier() {
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
+  const lastIdentifySignature = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !userId) {
+      lastIdentifySignature.current = null;
+      return;
+    }
+
+    const identifySignature = `${userId}:${selectedLanguageId ?? "none"}`;
+
+    if (lastIdentifySignature.current === identifySignature) {
+      return;
+    }
+
+    lastIdentifySignature.current = identifySignature;
+    identifyPostHogUser({
+      preferredLanguageId: selectedLanguageId,
+      userId,
+    });
+  }, [isLoaded, isSignedIn, selectedLanguageId, userId]);
+
+  return null;
 }
 
 export default function RootLayout() {
@@ -91,6 +120,7 @@ export default function RootLayout() {
       }}
     >
       <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+        <PostHogUserIdentifier />
         <Stack screenOptions={{ headerShown: false }} />
       </ClerkProvider>
     </PostHogProvider>
