@@ -8,9 +8,19 @@ type CaptionResponse = {
   }[];
 };
 
-const VISION_AGENT_TIMEOUT_MS = Number(
-  process.env.VISION_AGENT_TIMEOUT_MS ?? 30_000,
-);
+const MIN_VISION_AGENT_TIMEOUT_MS = 30_000;
+
+function getVisionAgentTimeoutMs() {
+  const parsedTimeout = Number(process.env.VISION_AGENT_TIMEOUT_MS);
+
+  if (!Number.isFinite(parsedTimeout) || parsedTimeout <= 25_000) {
+    return MIN_VISION_AGENT_TIMEOUT_MS;
+  }
+
+  return Math.max(parsedTimeout, MIN_VISION_AGENT_TIMEOUT_MS);
+}
+
+const VISION_AGENT_TIMEOUT_MS = getVisionAgentTimeoutMs();
 
 function getVisionAgentBaseUrl() {
   const baseUrl = process.env.VISION_AGENT_BASE_URL?.replace(/\/+$/, "");

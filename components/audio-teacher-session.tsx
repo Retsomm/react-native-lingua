@@ -117,6 +117,7 @@ function AudioTeacherSessionContent({
   const didAutoStartCallRef = useRef(false);
   const chatScrollViewRef = useRef<ScrollView | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isTogglingSpeaking, setIsTogglingSpeaking] = useState(false);
   const { width } = useWindowDimensions();
   const language = languages.find((item) => item.id === lesson.languageId);
   const previewHeight = Math.min(610, Math.max(540, width * 1.43));
@@ -125,7 +126,11 @@ function AudioTeacherSessionContent({
   const languageName = language?.name ?? "Language";
   const goal = lesson.goals[0] ?? lesson.description;
   const audioCall = useStreamAudioCall({ language, lesson, user });
-  const statusCopy = getAudioCallCopy(audioCall.status, audioCall.errorMessage);
+  const statusCopy = getAudioCallCopy(
+    audioCall.status,
+    audioCall.errorMessage,
+    isSpeaking,
+  );
   const agentStatusCopy = getAgentStatusCopy(audioCall.agentConnectionStatus);
   const chatCaptions = getChatCaptions(
     audioCall.liveCaptions,
@@ -166,7 +171,12 @@ function AudioTeacherSessionContent({
 
     if (canEndCall) {
       setIsSpeaking(false);
-      await audioCall.stopSpeaking();
+      try {
+        await audioCall.stopSpeaking();
+      } catch (error) {
+        console.error("Failed to stop speaking before ending call", error);
+      }
+
       await audioCall.endCall();
       onCallEnded?.();
       return;
@@ -178,18 +188,26 @@ function AudioTeacherSessionContent({
   };
 
   const toggleSpeaking = async () => {
-    if (!isInCall || isBusy) {
+    if (!isInCall || isBusy || isTogglingSpeaking) {
       return;
     }
 
-    if (isSpeaking) {
-      setIsSpeaking(false);
-      await audioCall.stopSpeaking();
-      return;
-    }
+    const nextSpeaking = !isSpeaking;
+    setIsTogglingSpeaking(true);
 
-    setIsSpeaking(true);
-    await audioCall.startSpeaking();
+    try {
+      if (nextSpeaking) {
+        await audioCall.startSpeaking();
+      } else {
+        await audioCall.stopSpeaking();
+      }
+
+      setIsSpeaking(nextSpeaking);
+    } catch (error) {
+      console.error("Failed to toggle speaking", error);
+    } finally {
+      setIsTogglingSpeaking(false);
+    }
   };
 
   useEffect(() => {
@@ -372,7 +390,7 @@ function AudioTeacherSessionContent({
             tone="call"
           />
           <LessonControl
-            disabled={!isInCall || isBusy}
+            disabled={!isInCall || isBusy || isTogglingSpeaking}
             iconName={isSpeaking ? "send" : "mic"}
             iconSize={34}
             isActive={isSpeaking}
@@ -629,6 +647,7 @@ function getAudioCallCopy(
     | "ended"
     | "error",
   errorMessage: string | null,
+  isSpeaking: boolean,
 ) {
   switch (status) {
     case "starting":
@@ -647,9 +666,9 @@ function getAudioCallCopy(
       };
     case "ready":
       return {
-        body: "Audio session ready. Tap Join to connect your microphone.",
+        body: "Audio session ready. Tap Call to start with your teacher.",
         header: "Ready",
-        prompt: "Session ready. Join when you are ready.",
+        prompt: "Session ready. Tap Call when you are ready.",
         status,
       };
     case "joining":
@@ -661,14 +680,16 @@ function getAudioCallCopy(
       };
     case "joined":
       return {
-        body: "You are in the audio lesson. Use Mic to mute or unmute.",
+        body: isSpeaking
+          ? "Listening now. Tap Send when you finish speaking."
+          : "You are in the lesson. Tap Speak, then tap Send when you finish.",
         header: "Live",
-        prompt: "Great. Repeat after me.",
+        prompt: isSpeaking ? "Speak now, then tap Send." : "Tap Speak to answer.",
         status,
       };
     case "muting":
       return {
-        body: "Updating your audio and video controls.",
+        body: "Updating your Speak and Send controls.",
         header: "Updating",
         prompt: "Updating controls...",
         status,
@@ -682,7 +703,7 @@ function getAudioCallCopy(
       };
     case "ended":
       return {
-        body: "Audio call ended. Start again to create a new session.",
+        body: "Audio call ended. Tap Call to create a new session.",
         header: "Ended",
         prompt: "Call ended. Nice practice.",
         status,

@@ -425,9 +425,16 @@ export function useStreamAudioCall({
       setStatus("joined");
 
       setCaptionErrorMessage(null);
-      setCaptionStatus("live");
+      setCaptionStatus("starting");
 
-      await connectAgentSession();
+      const didConnectAgent = await connectAgentSession();
+
+      if (didConnectAgent) {
+        setCaptionStatus("live");
+      } else {
+        setCaptionErrorMessage("Unable to connect live transcript captions.");
+        setCaptionStatus("error");
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to join audio call.",
@@ -718,7 +725,10 @@ function getNextBufferedCaption(
   currentCaptions: LiveCaption[],
   caption: BufferedCaption,
 ) {
-  return getNextCustomEventCaptions(currentCaptions, caption);
+  return getNextCustomEventCaptions(currentCaptions, {
+    ...caption,
+    captionId: caption.id,
+  });
 }
 
 function wait(ms: number, signal: AbortSignal) {
@@ -728,14 +738,19 @@ function wait(ms: number, signal: AbortSignal) {
       return;
     }
 
-    const timeout = setTimeout(resolve, ms);
+    const onAbort = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+
+    const timeout = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
 
     signal.addEventListener(
       "abort",
-      () => {
-        clearTimeout(timeout);
-        resolve();
-      },
+      onAbort,
       { once: true },
     );
   });

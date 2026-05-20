@@ -251,6 +251,16 @@ class CaptionMirroringConversation(Conversation):
             logger.exception("Failed to mirror transcript into Stream custom event")
 
 
+def cleanup_caption_state(call_id: str) -> None:
+    event = CAPTION_EVENTS.get(call_id)
+
+    if event:
+        event.set()
+
+    CAPTION_BUFFERS.pop(call_id, None)
+    CAPTION_EVENTS.pop(call_id, None)
+
+
 def build_teacher_instructions(**kwargs: Any) -> str:
     payload = as_mapping(kwargs.get("custom")) or kwargs
     lesson_payload = as_mapping(payload.get("lesson"))
@@ -388,12 +398,18 @@ async def join_call(
             await agent.simple_response(opening_prompt)
             await agent.finish()
         finally:
-            await stream.aclose()
+            try:
+                await stream.aclose()
+            finally:
+                cleanup_caption_state(call_id)
 
 
 def attach_caption_routes(runner: Runner) -> None:
     @runner.fast_api.get("/calls/{call_id}/captions")
     async def get_captions(call_id: str, after: int = 0) -> dict[str, Any]:
+        event = CAPTION_EVENTS.setdefault(call_id, asyncio.Event())
+        event.clear()
+
         captions = [
             caption
             for caption in CAPTION_BUFFERS.get(call_id, [])
@@ -402,9 +418,6 @@ def attach_caption_routes(runner: Runner) -> None:
 
         if captions:
             return {"captions": captions}
-
-        event = CAPTION_EVENTS.setdefault(call_id, asyncio.Event())
-        event.clear()
 
         try:
             await asyncio.wait_for(event.wait(), timeout=25)
