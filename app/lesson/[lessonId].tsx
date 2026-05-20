@@ -1,6 +1,9 @@
 import { AudioTeacherSession } from "@/components/audio-teacher-session";
+import { languages } from "@/data/languages";
 import { lessons } from "@/data/lessons";
+import { captureLessonAbandoned, captureLessonStarted } from "@/lib/analytics";
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -8,6 +11,38 @@ export default function LessonDetailScreen() {
   const insets = useSafeAreaInsets();
   const { lessonId } = useLocalSearchParams<{ lessonId: string }>();
   const lesson = lessons.find((item) => item.id === lessonId);
+  const lessonStartTimeRef = useRef<number | null>(null);
+  const didCompleteLessonRef = useRef(false);
+  const lastQuestionIndexRef = useRef(0);
+
+  useEffect(() => {
+    if (!lesson) {
+      return;
+    }
+
+    const languageName =
+      languages.find((language) => language.id === lesson.languageId)?.name ??
+      lesson.languageId;
+
+    lessonStartTimeRef.current = Date.now();
+    didCompleteLessonRef.current = false;
+    lastQuestionIndexRef.current = 0;
+    captureLessonStarted(lesson, languageName);
+
+    return () => {
+      const startedAt = lessonStartTimeRef.current;
+
+      if (!startedAt || didCompleteLessonRef.current) {
+        return;
+      }
+
+      captureLessonAbandoned({
+        lastQuestionIndex: lastQuestionIndexRef.current,
+        lessonId: lesson.id,
+        startedAt,
+      });
+    };
+  }, [lesson]);
 
   if (!lesson) {
     return (
