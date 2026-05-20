@@ -221,7 +221,6 @@ async def join_call(
         lesson_instructions = build_teacher_instructions(custom=custom_data)
         apply_agent_instructions(agent, lesson_instructions)
         opening_prompt = (
-            f"{lesson_instructions}\n\n"
             "Now greet the learner in English, introduce yourself as their AI teacher, "
             "and begin the first short speaking practice from this lesson."
         )
