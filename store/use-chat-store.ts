@@ -11,7 +11,7 @@ export type ChatMessage = {
   id: string;
   languageId: string;
   sender: "assistant" | "user";
-  status?: "sent" | "read";
+  status?: "delivered" | "read" | "sent";
   text: string;
 };
 

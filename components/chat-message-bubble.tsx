@@ -13,6 +13,16 @@ function formatMessageTime(createdAt: number) {
   }).format(new Date(createdAt));
 }
 
+function getStatusLabel(status: NonNullable<ChatMessage["status"]>) {
+  const statusLabels: Record<NonNullable<ChatMessage["status"]>, string> = {
+    delivered: "已送達",
+    read: "已讀",
+    sent: "已發送",
+  };
+
+  return statusLabels[status];
+}
+
 export function ChatMessageBubble({
   message,
   showAvatar = true,
@@ -23,13 +33,11 @@ export function ChatMessageBubble({
     <View
       className={`w-full flex-row ${isUser ? "justify-end" : "justify-start"}`}
     >
-      {!isUser ? (
+      {!isUser && showAvatar ? (
         <View className="mr-[8px] h-[34px] w-[34px] items-center justify-center rounded-full bg-lingua-deep-purple">
-          {showAvatar ? (
-            <Text className="font-poppins-bold text-[16px] leading-[22px] text-white">
-              AI
-            </Text>
-          ) : null}
+          <Text className="font-poppins-bold text-[16px] leading-[22px] text-white">
+            AI
+          </Text>
         </View>
       ) : null}
 
@@ -57,7 +65,7 @@ export function ChatMessageBubble({
         <View className={`pb-[2px] ${isUser ? "items-end" : "items-start"}`}>
           {isUser && message.status ? (
             <Text className="font-poppins-medium text-[10px] leading-[14px] text-[#536376]">
-              已讀
+              {getStatusLabel(message.status)}
             </Text>
           ) : null}
           <Text className="font-poppins-medium text-[10px] leading-[14px] text-[#536376]">
