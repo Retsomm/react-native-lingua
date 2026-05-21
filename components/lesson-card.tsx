@@ -1,3 +1,5 @@
+import { appThemeColors } from "@/constants/theme";
+import { useThemeStore } from "@/store/use-theme-store";
 import type { Lesson } from "@/types/learning";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -33,25 +35,30 @@ export function LessonCard({
   status,
 }: LessonCardProps) {
   const isActive = status === "in-progress";
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
 
   return (
     <Pressable
       accessibilityLabel={`開啟第 ${lessonNumber} 課：${lesson.title}`}
       accessibilityRole="button"
-      className={`min-h-[111px] flex-row items-center rounded-[18px] border bg-white px-[24px] py-[18px] ${
-        isActive ? "border-lingua-deep-purple" : "border-[#EEF0F5]"
+      className={`min-h-[111px] flex-row items-center rounded-[18px] border bg-lingua-background px-[24px] py-[18px] ${
+        isActive ? "border-lingua-deep-purple" : "border-lingua-border-soft"
       }`}
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        isActive && styles.activeCard,
+        isActive && [
+          styles.activeCard,
+          { backgroundColor: colors.surfaceMuted },
+        ],
         pressed && styles.pressed,
       ]}
     >
       <View className="flex-1 pr-[18px]">
         <Text
           className={`font-poppins-semibold text-[15px] leading-[21px] ${
-            isActive ? "text-lingua-deep-purple" : "text-[#8B94AD]"
+            isActive ? "text-lingua-deep-purple" : "text-lingua-text-tertiary"
           }`}
         >
           第 {lessonNumber} 課
@@ -61,7 +68,7 @@ export function LessonCard({
         </Text>
         <Text
           className={`mt-[5px] font-poppins-semibold text-[15px] leading-[21px] ${
-            isActive ? "text-lingua-deep-purple" : "text-[#8B94AD]"
+            isActive ? "text-lingua-deep-purple" : "text-lingua-text-tertiary"
           }`}
         >
           {statusCopy[status]}
@@ -81,8 +88,12 @@ export function LessonCard({
               resizeMode="contain"
             />
             {status === "not-started" ? (
-              <View className="absolute h-[31px] w-[31px] items-center justify-center rounded-[7px] border-2 border-[#68718D] bg-white">
-                <Ionicons name="lock-closed-outline" size={20} color="#68718D" />
+              <View className="absolute h-[31px] w-[31px] items-center justify-center rounded-[7px] border-2 border-lingua-text-tertiary bg-lingua-background">
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color={colors.textTertiary}
+                />
               </View>
             ) : null}
           </>
@@ -94,7 +105,6 @@ export function LessonCard({
 
 const styles = StyleSheet.create({
   activeCard: {
-    backgroundColor: "#FBFAFF",
     borderWidth: 2,
   },
   card: {

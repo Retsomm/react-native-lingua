@@ -47,7 +47,7 @@ export default function LessonDetailScreen() {
   if (!lesson) {
     return (
       <View
-        className="flex-1 items-center justify-center bg-white px-[28px]"
+        className="flex-1 items-center justify-center bg-lingua-background px-[28px]"
         style={{ paddingBottom: insets.bottom, paddingTop: insets.top }}
       >
         <Text className="text-center font-poppins-semibold text-[22px] leading-[30px] text-lingua-text-primary">

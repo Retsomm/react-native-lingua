@@ -1,7 +1,9 @@
 import { images } from "@/constants/images";
+import { appThemeColors } from "@/constants/theme";
 import { defaultLanguageId, languages } from "@/data/languages";
 import { captureLanguageSelected } from "@/lib/analytics";
 import { useLanguageStore } from "@/store/UseLanguageStore";
+import { useThemeStore } from "@/store/use-theme-store";
 import type { SupportedLanguage } from "@/types/learning";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -21,6 +23,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function LanguageSelectionScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
   const persistedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
   const setSelectedLanguage = useLanguageStore(
     (state) => state.setSelectedLanguageId,
@@ -70,7 +74,7 @@ export default function LanguageSelectionScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-lingua-background">
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -88,7 +92,7 @@ export default function LanguageSelectionScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
           >
-            <Ionicons name="chevron-back" size={30} color="#0D132B" />
+            <Ionicons name="chevron-back" size={30} color={colors.textPrimary} />
           </Pressable>
 
           <Text className="font-poppins-semibold text-[26px] leading-[34px] text-lingua-text-primary">
@@ -96,17 +100,17 @@ export default function LanguageSelectionScreen() {
           </Text>
         </View>
 
-        <View className="mt-[34px] flex-row items-center gap-[16px] rounded-[34px] border border-[#ECEEF4] bg-[#FBFBFD] px-[24px] py-[14px]">
-          <Ionicons name="search" size={28} color="#66708F" />
+        <View className="mt-[34px] flex-row items-center gap-[16px] rounded-[34px] border border-lingua-border-soft bg-lingua-surface-muted px-[24px] py-[14px]">
+          <Ionicons name="search" size={28} color={colors.textTertiary} />
           <TextInput
             autoCapitalize="none"
             autoCorrect={false}
             clearButtonMode="never"
             onChangeText={setSearchQuery}
             placeholder="搜尋語言"
-            placeholderTextColor="#6E7894"
+            placeholderTextColor={colors.textSecondary}
             returnKeyType="search"
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.textPrimary }]}
             value={searchQuery}
           />
 
@@ -117,7 +121,7 @@ export default function LanguageSelectionScreen() {
               onPress={() => setSearchQuery("")}
               style={({ pressed }) => pressed && styles.pressed}
             >
-              <Ionicons name="close-circle" size={24} color="#8A93AA" />
+              <Ionicons name="close-circle" size={24} color={colors.textTertiary} />
             </Pressable>
           ) : null}
         </View>
@@ -138,11 +142,11 @@ export default function LanguageSelectionScreen() {
         </View>
 
         {filteredLanguages.length === 0 ? (
-          <View className="mt-[28px] items-center rounded-[24px] border border-[#EEF0F5] bg-[#FBFBFD] px-[24px] py-[26px]">
+          <View className="mt-[28px] items-center rounded-[24px] border border-lingua-border-soft bg-lingua-surface-muted px-[24px] py-[26px]">
             <Text className="font-poppins-semibold text-[18px] leading-[26px] text-lingua-text-primary">
               找不到語言
             </Text>
-            <Text className="mt-[6px] text-center font-poppins text-[15px] leading-[22px] text-[#6E7894]">
+            <Text className="mt-[6px] text-center font-poppins text-[15px] leading-[22px] text-lingua-text-secondary">
               請嘗試搜尋語言名稱、原文名稱或縮寫。
             </Text>
           </View>
@@ -185,19 +189,29 @@ function LanguageRow({
   language,
   onPress,
 }: LanguageRowProps) {
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
-      className="min-h-[112px] flex-row items-center rounded-[24px] bg-white px-[16px]"
+      className="min-h-[112px] flex-row items-center rounded-[24px] bg-lingua-background px-[16px]"
       onPress={onPress}
       style={({ pressed }) => [
         styles.languageRow,
-        isSelected && styles.selectedLanguageRow,
+        { borderColor: colors.borderSoft },
+        isSelected && [
+          styles.selectedLanguageRow,
+          {
+            backgroundColor: colors.surfaceMuted,
+            borderColor: colors.deepPurple,
+          },
+        ],
         pressed && styles.pressed,
       ]}
     >
-      <View className="h-[52px] w-[52px] items-center justify-center overflow-hidden rounded-full border border-[#EEF0F5] bg-white">
+      <View className="h-[52px] w-[52px] items-center justify-center overflow-hidden rounded-full border border-lingua-border-soft bg-lingua-background">
         <Image
           source={images.flags[language.flagKey]}
           className="h-[52px] w-[52px]"
@@ -209,7 +223,7 @@ function LanguageRow({
         <Text className="font-poppins-semibold text-[22px] leading-[30px] text-lingua-text-primary">
           {language.name}
         </Text>
-        <Text className="mt-[4px] font-poppins text-[17px] leading-[25px] text-[#6E7894]">
+        <Text className="mt-[4px] font-poppins text-[17px] leading-[25px] text-lingua-text-secondary">
           {language.learnerCount}
         </Text>
       </View>
@@ -219,7 +233,7 @@ function LanguageRow({
           <Ionicons name="checkmark" size={26} color="#FFFFFF" />
         </View>
       ) : (
-        <Ionicons name="chevron-forward" size={26} color="#66708F" />
+        <Ionicons name="chevron-forward" size={26} color={colors.textTertiary} />
       )}
     </Pressable>
   );
@@ -257,7 +271,6 @@ const styles = StyleSheet.create({
     opacity: 0.72,
   },
   searchInput: {
-    color: "#0D132B",
     flex: 1,
     fontFamily: "Poppins-Regular",
     fontSize: 21,
@@ -265,8 +278,6 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   selectedLanguageRow: {
-    backgroundColor: "#FAF9FF",
-    borderColor: "#8B68FF",
     borderWidth: 2,
   },
 });

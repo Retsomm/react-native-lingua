@@ -1,6 +1,8 @@
 import { images } from "@/constants/images";
+import { appThemeColors } from "@/constants/theme";
 import { languages } from "@/data/languages";
 import { useStreamAudioCall } from "@/hooks/useStreamAudioCall";
+import { useThemeStore } from "@/store/use-theme-store";
 import type { LiveCaption } from "@/hooks/useStreamAudioCall";
 import type { Lesson } from "@/types/learning";
 import { useUser } from "@clerk/expo";
@@ -67,7 +69,7 @@ export function AudioTeacherSession({
   if (!lesson) {
     return (
       <View
-        className="flex-1 items-center justify-center bg-white px-[28px]"
+        className="flex-1 items-center justify-center bg-lingua-background px-[28px]"
         style={{ paddingBottom: insets.bottom, paddingTop: insets.top }}
       >
         <Text className="text-center font-poppins-semibold text-[22px] leading-[30px] text-lingua-text-primary">
@@ -119,6 +121,8 @@ function AudioTeacherSessionContent({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTogglingSpeaking, setIsTogglingSpeaking] = useState(false);
   const { width } = useWindowDimensions();
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
   const language = languages.find((item) => item.id === lesson.languageId);
   const previewHeight = Math.min(610, Math.max(540, width * 1.43));
   const greetingMascotSize = Math.min(330, Math.max(250, width * 0.72));
@@ -247,7 +251,7 @@ function AudioTeacherSessionContent({
   }, [audioCall, autoStartCall, user]);
 
   const content = (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-lingua-background">
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -265,7 +269,7 @@ function AudioTeacherSessionContent({
             onPress={() => router.back()}
             style={({ pressed }) => pressed && styles.pressed}
           >
-            <Ionicons name="chevron-back" size={38} color="#0D132B" />
+            <Ionicons name="chevron-back" size={38} color={colors.textPrimary} />
           </Pressable>
 
           <View className="ml-[18px] flex-1">
@@ -282,7 +286,7 @@ function AudioTeacherSessionContent({
                 }`}
               />
               <Text
-                className="ml-[8px] flex-1 font-poppins-medium text-[17px] leading-[23px] text-[#4E5874]"
+                className="ml-[8px] flex-1 font-poppins-medium text-[17px] leading-[23px] text-lingua-text-secondary"
                 numberOfLines={1}
               >
                 {languageName} • {statusCopy.header}
@@ -296,7 +300,7 @@ function AudioTeacherSessionContent({
             iconName="videocam"
             testID="audio-teacher-header-camera"
           />
-          <View className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-[#ECEEF7] bg-white">
+          <View className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-lingua-border-soft bg-lingua-background">
             <Text className="font-poppins-semibold text-[21px] leading-[28px] text-lingua-text-primary">
               {lesson.estimatedMinutes + lesson.xpReward - 3}
             </Text>
@@ -309,10 +313,10 @@ function AudioTeacherSessionContent({
           />
         </View>
 
-        <View className="mt-[18px] rounded-[22px] border border-[#EEF0F5] bg-white px-[18px] py-[16px]">
+        <View className="mt-[18px] rounded-[22px] border border-lingua-border-soft bg-lingua-background px-[18px] py-[16px]">
           <View className="flex-row items-center">
-            <View className="h-[44px] w-[44px] items-center justify-center rounded-full bg-[#F2EFFF]">
-              <Ionicons name="person" size={23} color="#5B3BF6" />
+            <View className="h-[44px] w-[44px] items-center justify-center rounded-full bg-lingua-accent-soft">
+              <Ionicons name="person" size={23} color={colors.deepPurple} />
             </View>
             <View className="ml-[13px] flex-1">
               <Text
@@ -322,19 +326,19 @@ function AudioTeacherSessionContent({
                 {userName}
               </Text>
               <Text
-                className="mt-[2px] font-poppins-medium text-[13px] leading-[19px] text-[#68718D]"
+                className="mt-[2px] font-poppins-medium text-[13px] leading-[19px] text-lingua-text-tertiary"
                 numberOfLines={2}
               >
                 {statusCopy.body}
               </Text>
             </View>
-            <View className="rounded-full bg-[#F7F8FC] px-[12px] py-[7px]">
-              <Text className="font-poppins-semibold text-[12px] leading-[16px] text-[#5B3BF6]">
+            <View className="rounded-full bg-lingua-surface-muted px-[12px] py-[7px]">
+              <Text className="font-poppins-semibold text-[12px] leading-[16px] text-lingua-deep-purple">
                 {audioCall.isMuted ? "已靜音" : audioCall.status === "joined" ? "直播中" : "語音"}
               </Text>
             </View>
           </View>
-          <View className="mt-[14px] flex-row items-center rounded-[16px] bg-[#F7F8FC] px-[14px] py-[11px]">
+          <View className="mt-[14px] flex-row items-center rounded-[16px] bg-lingua-surface-muted px-[14px] py-[11px]">
             <View
               className="h-[10px] w-[10px] rounded-full"
               style={{ backgroundColor: agentStatusCopy.color }}
@@ -342,7 +346,7 @@ function AudioTeacherSessionContent({
             <Text className="ml-[9px] font-poppins-semibold text-[13px] leading-[18px] text-lingua-text-primary">
               AI 老師
             </Text>
-            <Text className="ml-[7px] flex-1 font-poppins-medium text-[13px] leading-[18px] text-[#68718D]">
+            <Text className="ml-[7px] flex-1 font-poppins-medium text-[13px] leading-[18px] text-lingua-text-tertiary">
               {agentStatusCopy.label}
             </Text>
           </View>
@@ -377,7 +381,7 @@ function AudioTeacherSessionContent({
               className="absolute inset-0 items-center justify-center px-[24px]"
               pointerEvents="none"
             >
-              <View className="mb-[-12px] rounded-full bg-white px-[18px] py-[10px]" style={styles.greetingBubble}>
+              <View className="mb-[-12px] rounded-full bg-lingua-background px-[18px] py-[10px]" style={styles.greetingBubble}>
                 <Text className="font-poppins-bold text-[18px] leading-[24px] text-lingua-text-primary">
                   哈囉！
                 </Text>
@@ -418,12 +422,19 @@ function AudioTeacherSessionContent({
           />
         </View>
 
-        <View className="mt-[20px] gap-[16px] rounded-[24px] bg-white px-[24px] py-[22px]" style={styles.feedbackCard}>
+        <View className="mt-[20px] gap-[16px] rounded-[24px] bg-lingua-background px-[24px] py-[22px]" style={styles.feedbackCard}>
           {feedbackMetrics.map((metric, index) => (
             <View
               key={metric.label}
               className="flex-row items-center justify-between"
-              style={index > 0 ? styles.feedbackMetricDivider : undefined}
+              style={
+                index > 0
+                  ? [
+                      styles.feedbackMetricDivider,
+                      { borderTopColor: colors.borderSoft },
+                    ]
+                  : undefined
+              }
             >
               <Text className="font-poppins-semibold text-[17px] leading-[24px] text-lingua-text-primary">
                 {metric.label}
@@ -438,7 +449,7 @@ function AudioTeacherSessionContent({
           ))}
         </View>
 
-        <View className="mt-[16px] rounded-[24px] border border-[#EEF0F5] bg-white px-[22px] py-[20px]">
+        <View className="mt-[16px] rounded-[24px] border border-lingua-border-soft bg-lingua-background px-[22px] py-[20px]">
           <Text className="font-poppins-semibold text-[16px] leading-[22px] text-lingua-deep-purple">
             課程目標
           </Text>
@@ -450,19 +461,19 @@ function AudioTeacherSessionContent({
             {lesson.phrases.map((phrase) => (
               <View
                 key={phrase.id}
-                className="rounded-[16px] bg-[#F7F8FC] px-[16px] py-[13px]"
+                className="rounded-[16px] bg-lingua-surface-muted px-[16px] py-[13px]"
               >
                 <Text className="font-poppins-semibold text-[17px] leading-[24px] text-lingua-text-primary">
                   {phrase.phrase}
                 </Text>
-                <Text className="mt-[3px] font-poppins-medium text-[14px] leading-[20px] text-[#68718D]">
+                <Text className="mt-[3px] font-poppins-medium text-[14px] leading-[20px] text-lingua-text-tertiary">
                   {phrase.translation} • {phrase.pronunciation}
                 </Text>
               </View>
             ))}
           </View>
 
-          <Text className="mt-[16px] font-poppins-medium text-[13px] leading-[20px] text-[#68718D]">
+          <Text className="mt-[16px] font-poppins-medium text-[13px] leading-[20px] text-lingua-text-tertiary">
             {lesson.aiTeacherPrompt}
           </Text>
         </View>
@@ -500,17 +511,20 @@ function HeaderAction({
   onPress,
   testID,
 }: HeaderActionProps) {
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
+
   if (disabled || !onPress) {
     return (
       <View
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
         accessibilityState={{ disabled: true }}
-        className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-[#ECEEF7] bg-white"
+        className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-lingua-border-soft bg-lingua-background"
         style={[styles.headerAction, styles.disabledHeaderAction]}
         testID={testID}
       >
-        <Ionicons name={iconName} size={27} color="#0D132B" />
+        <Ionicons name={iconName} size={27} color={colors.textPrimary} />
       </View>
     );
   }
@@ -519,12 +533,12 @@ function HeaderAction({
     <Pressable
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
-      className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-[#ECEEF7] bg-white"
+      className="ml-[8px] h-[52px] w-[52px] items-center justify-center rounded-full border border-lingua-border-soft bg-lingua-background"
       onPress={onPress}
       style={({ pressed }) => [styles.headerAction, pressed && styles.pressed]}
       testID={testID}
     >
-      <Ionicons name={iconName} size={27} color="#0D132B" />
+      <Ionicons name={iconName} size={27} color={colors.textPrimary} />
     </Pressable>
   );
 }
@@ -538,7 +552,9 @@ function LessonControl({
   onPress,
   tone = "call",
 }: LessonControlProps) {
-  const colors = getLessonControlColors(tone, isActive);
+  const theme = useThemeStore((state) => state.theme);
+  const themeColors = appThemeColors[theme];
+  const colors = getLessonControlColors(tone, isActive, themeColors);
 
   return (
     <Pressable
@@ -577,6 +593,7 @@ function LessonControl({
 function getLessonControlColors(
   tone: "call" | "speak",
   isActive: boolean,
+  themeColors: (typeof appThemeColors)["light"],
 ) {
   if (tone === "speak") {
     return isActive
@@ -587,10 +604,10 @@ function getLessonControlColors(
           labelColor: "#12851D",
         }
       : {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E4E7F1",
-          iconColor: "#07133A",
-          labelColor: "#0D132B",
+          backgroundColor: themeColors.background,
+          borderColor: themeColors.borderSoft,
+          iconColor: themeColors.textPrimary,
+          labelColor: themeColors.textPrimary,
         };
   }
 
@@ -619,6 +636,8 @@ type ChatCaptionBubbleProps = {
 
 function ChatCaptionBubble({ caption }: ChatCaptionBubbleProps) {
   const isTeacher = caption.role === "teacher";
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
 
   return (
     <View
@@ -629,16 +648,21 @@ function ChatCaptionBubble({ caption }: ChatCaptionBubbleProps) {
       {isTeacher ? (
         <Image
           source={images.aiTeacherFoxSweater}
-          className="mr-[8px] h-[34px] w-[34px] rounded-full bg-white"
+          className="mr-[8px] h-[34px] w-[34px] rounded-full bg-lingua-background"
           resizeMode="cover"
         />
       ) : null}
 
       <View
         className={`max-w-[78%] rounded-[20px] px-[16px] py-[12px] ${
-          isTeacher ? "rounded-bl-[6px] bg-white" : "rounded-br-[6px] bg-[#5B3BF6]"
+          isTeacher
+            ? "rounded-bl-[6px] bg-lingua-background"
+            : "rounded-br-[6px] bg-lingua-deep-purple"
         }`}
-        style={styles.chatBubble}
+        style={[
+          styles.chatBubble,
+          isTeacher ? { borderColor: colors.borderSoft, borderWidth: 1 } : undefined,
+        ]}
       >
         <Text
           className={`font-poppins-semibold text-[15px] leading-[22px] ${
@@ -782,6 +806,8 @@ type LessonTabBarProps = {
 
 function LessonTabBar({ activeTabRoute }: LessonTabBarProps) {
   const insets = useSafeAreaInsets();
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
 
   return (
     <View
@@ -790,8 +816,8 @@ function LessonTabBar({ activeTabRoute }: LessonTabBarProps) {
       style={{ paddingBottom: Math.max(insets.bottom, 10) }}
     >
       <View
-        className="h-[86px] flex-row items-center rounded-[28px] border border-[#F0F1F6] bg-white"
-        style={styles.tabBar}
+        className="h-[86px] flex-row items-center rounded-[28px] border border-lingua-border-soft bg-lingua-background"
+        style={[styles.tabBar, { shadowColor: theme === "dark" ? "#000000" : "#0D132B" }]}
       >
         {tabItems.map((item) => {
           const isActive = item.route === activeTabRoute;
@@ -808,11 +834,11 @@ function LessonTabBar({ activeTabRoute }: LessonTabBarProps) {
               <Ionicons
                 name={item.iconName}
                 size={31}
-                color={isActive ? "#5B3BF6" : "#64708E"}
+                color={isActive ? colors.deepPurple : colors.textTertiary}
               />
               <Text
                 className={`mt-[6px] text-center font-poppins-semibold text-[13px] leading-[17px] ${
-                  isActive ? "text-lingua-deep-purple" : "text-[#64708E]"
+                  isActive ? "text-lingua-deep-purple" : "text-lingua-text-tertiary"
                 }`}
               >
                 {item.label}
@@ -846,7 +872,6 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
   },
   feedbackMetricDivider: {
-    borderTopColor: "#ECEEF7",
     borderTopWidth: 1,
     paddingTop: 16,
   },

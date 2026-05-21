@@ -1,9 +1,11 @@
 import { LessonCard, type LessonStatus } from "@/components/lesson-card";
 import { images } from "@/constants/images";
+import { appThemeColors } from "@/constants/theme";
 import { defaultLanguageId, languages } from "@/data/languages";
 import { lessons } from "@/data/lessons";
 import { units } from "@/data/units";
 import { useLanguageStore } from "@/store/UseLanguageStore";
+import { useThemeStore } from "@/store/use-theme-store";
 import type { Lesson } from "@/types/learning";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -34,6 +36,8 @@ export default function LearnScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
   const [activeTab, setActiveTab] = useState<LearnTab>("lessons");
   const heroHeight = width * (272 / 546);
 
@@ -75,7 +79,7 @@ export default function LearnScreen() {
   const activeLesson = unitLessons[activeLessonIndex] ?? unitLessons[0];
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-lingua-background">
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -93,14 +97,14 @@ export default function LearnScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => pressed && styles.pressed}
           >
-            <Ionicons name="chevron-back" size={35} color="#0D132B" />
+            <Ionicons name="chevron-back" size={35} color={colors.textPrimary} />
           </Pressable>
 
           <View className="flex-1 px-[22px]">
             <Text className="font-poppins-semibold text-[25px] leading-[33px] text-lingua-text-primary">
               {activeLesson?.title ?? currentUnit?.title ?? selectedLanguage.name}
             </Text>
-            <Text className="mt-[4px] font-poppins-medium text-[18px] leading-[25px] text-[#7A84A1]">
+            <Text className="mt-[4px] font-poppins-medium text-[18px] leading-[25px] text-lingua-text-tertiary">
               單元 {currentUnit?.order ?? 1} • {completedCount} / {unitLessons.length} 堂課
             </Text>
           </View>
@@ -110,7 +114,11 @@ export default function LearnScreen() {
             hitSlop={12}
             style={({ pressed }) => pressed && styles.pressed}
           >
-            <Ionicons name="bookmark-outline" size={34} color="#5B3BF6" />
+            <Ionicons
+              name="bookmark-outline"
+              size={34}
+              color={colors.deepPurple}
+            />
           </Pressable>
         </View>
 
@@ -118,11 +126,14 @@ export default function LearnScreen() {
           source={images.lessonArt.cafeScene}
           imageStyle={styles.heroImage}
           resizeMode="contain"
-          style={[styles.hero, { height: heroHeight, width }]}
+          style={[
+            styles.hero,
+            { backgroundColor: colors.background, height: heroHeight, width },
+          ]}
         />
 
         <View
-          className="h-[80px] flex-row overflow-hidden rounded-[22px] bg-white/95"
+          className="h-[80px] flex-row overflow-hidden rounded-[22px] bg-lingua-background"
           style={styles.segmentContainer}
         >
           <SegmentButton
@@ -162,7 +173,7 @@ export default function LearnScreen() {
                 key={lesson.id}
                 accessibilityLabel={`練習${lesson.title}`}
                 accessibilityRole="button"
-                className="min-h-[96px] flex-row items-center rounded-[18px] border border-[#EEF0F5] bg-white px-[22px] py-[18px]"
+                className="min-h-[96px] flex-row items-center rounded-[18px] border border-lingua-border-soft bg-lingua-background px-[22px] py-[18px]"
                 onPress={() =>
                   router.push({
                     pathname: "/lesson/[lessonId]",
@@ -171,22 +182,22 @@ export default function LearnScreen() {
                 }
                 style={({ pressed }) => [styles.practiceCard, pressed && styles.pressed]}
               >
-                <View className="h-[48px] w-[48px] items-center justify-center rounded-[14px] bg-[#F2EFFF]">
+                <View className="h-[48px] w-[48px] items-center justify-center rounded-[14px] bg-lingua-accent-soft">
                   <Ionicons
                     name={index % 2 === 0 ? "mic-outline" : "chatbubble-ellipses-outline"}
                     size={27}
-                    color="#5B3BF6"
+                    color={colors.deepPurple}
                   />
                 </View>
                 <View className="ml-[18px] flex-1">
                   <Text className="font-poppins-semibold text-[18px] leading-[25px] text-lingua-text-primary">
                     {lesson.title}
                   </Text>
-                  <Text className="mt-[4px] font-poppins-medium text-[15px] leading-[22px] text-[#8B94AD]">
+                  <Text className="mt-[4px] font-poppins-medium text-[15px] leading-[22px] text-lingua-text-tertiary">
                     {lesson.activities.length} 個快速練習題
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color="#8B94AD" />
+                <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
               </Pressable>
             ))}
           </View>
@@ -229,7 +240,7 @@ function SegmentButton({ isActive, label, onPress }: SegmentButtonProps) {
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
-      className="flex-1 items-center justify-center bg-white"
+      className="flex-1 items-center justify-center bg-lingua-background"
       onPress={onPress}
       style={({ pressed }) => [
         isActive && styles.activeSegment,
@@ -238,7 +249,7 @@ function SegmentButton({ isActive, label, onPress }: SegmentButtonProps) {
     >
       <Text
         className={`font-poppins-semibold text-[20px] leading-[28px] ${
-          isActive ? "text-lingua-deep-purple" : "text-[#65708E]"
+          isActive ? "text-lingua-deep-purple" : "text-lingua-text-secondary"
         }`}
       >
         {label}
@@ -260,7 +271,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   hero: {
-    backgroundColor: "#FFFFFF",
     marginLeft: -24,
     marginTop: 19,
     overflow: "hidden",

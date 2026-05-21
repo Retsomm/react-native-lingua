@@ -1,6 +1,8 @@
 import { images } from "@/constants/images";
+import { appThemeColors, appThemeOptions } from "@/constants/theme";
 import { defaultLanguageId, languages } from "@/data/languages";
 import { useLanguageStore } from "@/store/UseLanguageStore";
+import { useThemeStore } from "@/store/use-theme-store";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth, useUser } from "@clerk/expo";
 import { router } from "expo-router";
@@ -12,6 +14,9 @@ export default function ProfileScreen() {
   const { signOut } = useAuth();
   const { user } = useUser();
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
+  const theme = useThemeStore((state) => state.theme);
+  const setTheme = useThemeStore((state) => state.setTheme);
+  const colors = appThemeColors[theme];
 
   const selectedLanguage =
     languages.find((language) => language.id === selectedLanguageId) ??
@@ -35,7 +40,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-lingua-background">
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -49,11 +54,11 @@ export default function ProfileScreen() {
         <Text className="font-poppins-bold text-[31px] leading-[39px] text-lingua-text-primary">
           個人
         </Text>
-        <Text className="mt-[6px] font-poppins text-[16px] leading-[24px] text-[#6E7894]">
+        <Text className="mt-[6px] font-poppins text-[16px] leading-[24px] text-lingua-text-secondary">
           管理你的帳號與目前學習語言。
         </Text>
 
-        <View className="mt-[30px] rounded-[28px] bg-[#FBFBFD] px-[22px] py-[24px]">
+        <View className="mt-[30px] rounded-[28px] bg-lingua-surface-muted px-[22px] py-[24px]">
           <View className="flex-row items-center">
             <View className="h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full bg-lingua-deep-purple">
               {user?.hasImage && user.imageUrl ? (
@@ -77,7 +82,7 @@ export default function ProfileScreen() {
                 {displayName}
               </Text>
               <Text
-                className="mt-[4px] font-poppins text-[15px] leading-[22px] text-[#6E7894]"
+                className="mt-[4px] font-poppins text-[15px] leading-[22px] text-lingua-text-secondary"
                 numberOfLines={1}
               >
                 {secondaryText}
@@ -86,21 +91,21 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View className="mt-[24px] rounded-[28px] border border-[#EEF0F5] bg-white px-[22px] py-[24px]">
+        <View className="mt-[24px] rounded-[28px] border border-lingua-border-soft bg-lingua-background px-[22px] py-[24px]">
           <View className="flex-row items-center justify-between">
             <View>
-              <Text className="font-poppins-semibold text-[17px] leading-[24px] text-[#6E7894]">
+              <Text className="font-poppins-semibold text-[17px] leading-[24px] text-lingua-text-secondary">
                 目前語言
               </Text>
               <Text className="mt-[6px] font-poppins-bold text-[28px] leading-[36px] text-lingua-text-primary">
                 {selectedLanguage.name}
               </Text>
-              <Text className="mt-[2px] font-poppins-medium text-[17px] leading-[25px] text-[#7D87A3]">
+              <Text className="mt-[2px] font-poppins-medium text-[17px] leading-[25px] text-lingua-text-tertiary">
                 {selectedLanguage.nativeName}
               </Text>
             </View>
 
-            <View className="h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full border border-[#EEF0F5] bg-white">
+            <View className="h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full border border-lingua-border-soft bg-lingua-background">
               <Image
                 source={images.flags[selectedLanguage.flagKey]}
                 className="h-[68px] w-[68px]"
@@ -109,11 +114,11 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <View className="mt-[22px] flex-row items-center rounded-[20px] bg-[#F5F3FF] px-[18px] py-[16px]">
+          <View className="mt-[22px] flex-row items-center rounded-[20px] bg-lingua-accent-soft px-[18px] py-[16px]">
             <View className="h-[38px] w-[38px] items-center justify-center rounded-full bg-lingua-deep-purple">
               <Ionicons name="school" size={22} color="#FFFFFF" />
             </View>
-            <Text className="ml-[14px] flex-1 font-poppins-medium text-[15px] leading-[22px] text-[#48516D]">
+            <Text className="ml-[14px] flex-1 font-poppins-medium text-[15px] leading-[22px] text-lingua-text-secondary">
               {selectedLanguage.description}
             </Text>
           </View>
@@ -132,15 +137,57 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
+        <View className="mt-[24px] rounded-[28px] border border-lingua-border-soft bg-lingua-background px-[22px] py-[24px]">
+          <Text className="font-poppins-semibold text-[17px] leading-[24px] text-lingua-text-secondary">
+            主題色
+          </Text>
+          <Text className="mt-[6px] font-poppins-bold text-[28px] leading-[36px] text-lingua-text-primary">
+            {theme === "dark" ? "黑色系" : "淺色系"}
+          </Text>
+
+          <View className="mt-[18px] flex-row rounded-[22px] bg-lingua-surface-muted p-[5px]">
+            {appThemeOptions.map((option) => {
+              const isActive = option.value === theme;
+
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityLabel={`切換到${option.label}主題`}
+                  accessibilityRole="button"
+                  accessibilityState={isActive ? { selected: true } : {}}
+                  className={`min-h-[54px] flex-1 flex-row items-center justify-center rounded-[18px] ${
+                    isActive ? "bg-lingua-deep-purple" : "bg-transparent"
+                  }`}
+                  onPress={() => setTheme(option.value)}
+                  style={({ pressed }) => pressed && styles.pressed}
+                >
+                  <Ionicons
+                    name={option.icon}
+                    size={22}
+                    color={isActive ? "#FFFFFF" : colors.textSecondary}
+                  />
+                  <Text
+                    className={`ml-[8px] font-poppins-bold text-[16px] leading-[23px] ${
+                      isActive ? "text-white" : "text-lingua-text-secondary"
+                    }`}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="登出"
-          className="mt-[24px] flex-row items-center justify-center rounded-[24px] border border-[#FFE0E0] bg-[#FFF5F5] px-[22px] py-[18px]"
+          className="mt-[24px] flex-row items-center justify-center rounded-[24px] border border-lingua-danger-border bg-lingua-danger-soft px-[22px] py-[18px]"
           onPress={handleSignOut}
           style={({ pressed }) => pressed && styles.pressed}
         >
-          <Ionicons name="log-out-outline" size={26} color="#EF4444" />
-          <Text className="ml-[10px] font-poppins-bold text-[18px] leading-[26px] text-[#EF4444]">
+          <Ionicons name="log-out-outline" size={26} color={colors.danger} />
+          <Text className="ml-[10px] font-poppins-bold text-[18px] leading-[26px] text-lingua-error">
             登出
           </Text>
         </Pressable>

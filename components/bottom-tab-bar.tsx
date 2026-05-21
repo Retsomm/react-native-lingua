@@ -1,3 +1,5 @@
+import { appThemeColors } from "@/constants/theme";
+import { useThemeStore } from "@/store/use-theme-store";
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import type { ComponentProps } from "react";
@@ -38,6 +40,8 @@ export function BottomTabBar({
   state,
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
   const [barWidth, setBarWidth] = useState(0);
   const indicatorX = useRef(new Animated.Value(0)).current;
   const tabWidth = barWidth / state.routes.length;
@@ -67,9 +71,9 @@ export function BottomTabBar({
       style={{ paddingBottom: Math.max(insets.bottom, 10) }}
     >
       <View
-        className="relative h-[86px] flex-row items-center overflow-hidden rounded-[28px] border border-[#F0F1F6] bg-white"
+        className="relative h-[86px] flex-row items-center overflow-hidden rounded-[28px] border border-lingua-border-soft bg-lingua-background"
         onLayout={handleLayout}
-        style={styles.bar}
+        style={[styles.bar, { boxShadow: `0 8px 24px ${colors.tabShadow}` }]}
       >
         {barWidth > 0 ? (
           <Animated.View
@@ -77,6 +81,7 @@ export function BottomTabBar({
             style={[
               styles.activeCircleContainer,
               styles.activeCircle,
+              { backgroundColor: colors.deepPurple },
               { transform: [{ translateX: indicatorX }] },
             ]}
           >
@@ -120,8 +125,8 @@ export function BottomTabBar({
                 <View className="h-[29px]" />
               ) : (
                 <>
-                  <Ionicons name={iconName} size={29} color="#838BA6" />
-                  <Text className="mt-[5px] font-poppins-semibold text-[13px] leading-[17px] text-[#838BA6]">
+                  <Ionicons name={iconName} size={29} color={colors.mutedIcon} />
+                  <Text className="mt-[5px] font-poppins-semibold text-[13px] leading-[17px] text-lingua-text-tertiary">
                     {label}
                   </Text>
                 </>
@@ -137,7 +142,6 @@ export function BottomTabBar({
 const styles = StyleSheet.create({
   activeCircleContainer: {
     alignItems: "center",
-    backgroundColor: "#5b3bf6",
     borderRadius: ACTIVE_SIZE / 2,
     height: ACTIVE_SIZE,
     justifyContent: "center",
