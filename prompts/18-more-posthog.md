@@ -21,6 +21,6 @@ Three custom events, captured at these moments:
 
 
 Implementation rules:
-- Track lesson start time with a ref captured on mount so duration_seconds is accurate.
+- Track lesson start time with a ref captured on mount so time_into_lesson_seconds is accurate.
 - Do not modify any UI.
 - Do not expose any keys; PostHog is already configured via environment variables.
