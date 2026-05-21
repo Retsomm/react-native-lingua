@@ -121,6 +121,7 @@ function AudioTeacherSessionContent({
   const { width } = useWindowDimensions();
   const language = languages.find((item) => item.id === lesson.languageId);
   const previewHeight = Math.min(610, Math.max(540, width * 1.43));
+  const greetingMascotSize = Math.min(330, Math.max(250, width * 0.72));
 
   const primaryPhrase = lesson.phrases[0];
   const languageName = language?.name ?? "語言";
@@ -153,11 +154,11 @@ function AudioTeacherSessionContent({
     audioCall.status === "ended" ||
     audioCall.status === "error";
   const isInCall = audioCall.status === "joined";
+  const shouldShowLiveCaptions = isInCall;
   const canEndCall =
     audioCall.status !== "idle" &&
     audioCall.status !== "ended" &&
     audioCall.status !== "error";
-  const hasTriggeredCall = audioCall.status !== "idle";
   const userName =
     audioCall.streamUser?.name ??
     user?.fullName ??
@@ -222,14 +223,14 @@ function AudioTeacherSessionContent({
   }, [isInCall]);
 
   useEffect(() => {
-    if (!hasTriggeredCall) {
+    if (!shouldShowLiveCaptions) {
       return;
     }
 
     requestAnimationFrame(() => {
       chatScrollViewRef.current?.scrollToEnd({ animated: true });
     });
-  }, [chatCaptionSignature, hasTriggeredCall]);
+  }, [chatCaptionSignature, shouldShowLiveCaptions]);
 
   useEffect(() => {
     if (
@@ -356,7 +357,7 @@ function AudioTeacherSessionContent({
         >
           <View className="absolute inset-0 bg-black/10" />
 
-          {hasTriggeredCall ? (
+          {shouldShowLiveCaptions ? (
             <ScrollView
               contentContainerStyle={styles.chatTranscriptContent}
               onContentSizeChange={() => {
@@ -370,7 +371,24 @@ function AudioTeacherSessionContent({
                 <ChatCaptionBubble key={caption.id} caption={caption} />
               ))}
             </ScrollView>
-          ) : null}
+          ) : (
+            <View
+              accessibilityLabel="AI 老師吉祥物正在打招呼"
+              className="absolute inset-0 items-center justify-center px-[24px]"
+              pointerEvents="none"
+            >
+              <View className="mb-[-12px] rounded-full bg-white px-[18px] py-[10px]" style={styles.greetingBubble}>
+                <Text className="font-poppins-bold text-[18px] leading-[24px] text-lingua-text-primary">
+                  哈囉！
+                </Text>
+              </View>
+              <Image
+                source={images.mascotWelcome}
+                resizeMode="contain"
+                style={{ height: greetingMascotSize, width: greetingMascotSize }}
+              />
+            </View>
+          )}
         </ImageBackground>
 
         <View
@@ -834,6 +852,13 @@ const styles = StyleSheet.create({
   },
   disabledHeaderAction: {
     opacity: 0.55,
+  },
+  greetingBubble: {
+    shadowColor: "#0D132B",
+    shadowOffset: { height: 6, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    zIndex: 2,
   },
   headerAction: {
     shadowColor: "#0D132B",
