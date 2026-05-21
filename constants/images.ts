@@ -1,13 +1,10 @@
-import mascotLogo from "../assets/images/mascot-logo.png";
-import mascotAuth from "../assets/images/mascot-auth.png";
-import mascotWelcome from "../assets/images/mascot-welcome.png";
-import aiTeacherFoxSweater from "../assets/images/ai-teacher-fox-sweater.png";
+import mascotPinkCreature from "../assets/images/mascot-pink-creature.png";
 import earth from "../assets/images/earth.png";
 import earthCropped from "../assets/images/EarthCropped.png";
 import palace from "../assets/images/palace.png";
 import streakFire from "../assets/images/streak-fire.png";
 import treasure from "../assets/images/treasure.png";
-import lessonCafeScene from "../assets/images/lesson-cafe-scene.png";
+import lessonCafeSceneMascot from "../assets/images/lesson-cafe-scene-mascot.png";
 import lessonHomeBackground from "../assets/images/lesson-home-background.png";
 import chineseFlag from "../assets/images/flags/chinese.png";
 import englishFlag from "../assets/images/flags/english.png";
@@ -27,18 +24,18 @@ export const images = {
     korean: koreanFlag,
     spanish: spanishFlag,
   },
-  aiTeacherFoxSweater,
-  mascotAuth,
-  mascotLogo,
-  mascotWelcome,
+  aiTeacherFoxSweater: mascotPinkCreature,
+  mascotAuth: mascotPinkCreature,
+  mascotLogo: mascotPinkCreature,
+  mascotWelcome: mascotPinkCreature,
   palace,
   streakFire,
-  teacherPortrait: mascotAuth,
+  teacherPortrait: mascotPinkCreature,
   treasure,
   lessonArt: {
-    cafe: lessonCafeScene,
-    cafeScene: lessonCafeScene,
-    completed: mascotLogo,
+    cafe: lessonCafeSceneMascot,
+    cafeScene: lessonCafeSceneMascot,
+    completed: mascotPinkCreature,
     homeBackground: lessonHomeBackground,
     inProgress: treasure,
     notStarted: palace,
