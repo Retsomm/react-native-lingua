@@ -3,6 +3,8 @@
 Lingua 是一個受 Duolingo 啟發的 AI 語言學習 App，使用 Expo、React Native、Expo Router、Clerk、Stream Video、NativeWind、Zustand 與 AsyncStorage 建置。
 
 這個專案同時是一個教學型專案。程式碼應該維持實用、清楚、容易講解，讓開發者可以一個功能接著一個功能學會如何組成現代 AI Expo App。
+<img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/2933cd73-6ebc-4b64-b413-24d2a44ec144" />
+
 
 ## 目前功能
 
