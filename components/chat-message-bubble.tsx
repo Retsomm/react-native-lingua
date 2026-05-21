@@ -1,0 +1,70 @@
+import type { ChatMessage } from "@/store/use-chat-store";
+import { Text, View } from "react-native";
+
+type ChatMessageBubbleProps = {
+  message: ChatMessage;
+  showAvatar?: boolean;
+};
+
+function formatMessageTime(createdAt: number) {
+  return new Intl.DateTimeFormat("zh-TW", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(createdAt));
+}
+
+export function ChatMessageBubble({
+  message,
+  showAvatar = true,
+}: ChatMessageBubbleProps) {
+  const isUser = message.sender === "user";
+
+  return (
+    <View
+      className={`w-full flex-row ${isUser ? "justify-end" : "justify-start"}`}
+    >
+      {!isUser ? (
+        <View className="mr-[8px] h-[34px] w-[34px] items-center justify-center rounded-full bg-lingua-deep-purple">
+          {showAvatar ? (
+            <Text className="font-poppins-bold text-[16px] leading-[22px] text-white">
+              AI
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+
+      <View
+        className={`max-w-[76%] flex-row items-end gap-[6px] ${
+          isUser ? "flex-row-reverse" : ""
+        }`}
+      >
+        <View
+          className={`rounded-[18px] px-[14px] py-[10px] ${
+            isUser
+              ? "rounded-tr-[4px] bg-lingua-deep-purple"
+              : "rounded-tl-[4px] bg-white"
+          }`}
+        >
+          <Text
+            className={`font-poppins-medium text-[15px] leading-[22px] ${
+              isUser ? "text-white" : "text-[#111827]"
+            }`}
+          >
+            {message.text}
+          </Text>
+        </View>
+
+        <View className={`pb-[2px] ${isUser ? "items-end" : "items-start"}`}>
+          {isUser && message.status ? (
+            <Text className="font-poppins-medium text-[10px] leading-[14px] text-[#536376]">
+              已讀
+            </Text>
+          ) : null}
+          <Text className="font-poppins-medium text-[10px] leading-[14px] text-[#536376]">
+            {formatMessageTime(message.createdAt)}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
