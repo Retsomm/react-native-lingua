@@ -12,7 +12,7 @@ export const appThemeOptions: Array<{
   },
   {
     icon: "moon",
-    label: "黑色",
+    label: "深色",
     value: "dark",
   },
 ];

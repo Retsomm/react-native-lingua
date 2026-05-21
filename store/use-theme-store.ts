@@ -41,9 +41,6 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: "lingua-theme-storage",
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
       partialize: (state) => ({
         theme: state.theme,
       }),
@@ -55,7 +52,3 @@ export const useThemeStore = create<ThemeState>()(
 useThemeStore.persist.onFinishHydration((state) => {
   state.setHasHydrated(true);
 });
-
-if (useThemeStore.persist.hasHydrated()) {
-  useThemeStore.setState({ hasHydrated: true });
-}
