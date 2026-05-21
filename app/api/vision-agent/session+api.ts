@@ -52,7 +52,7 @@ async function readErrorMessage(response: Response) {
     data?.error ??
     data?.message ??
     data?.detail ??
-    "Unable to connect to the AI teacher service."
+    "無法連線 AI 老師服務。"
   );
 }
 
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
         error:
           error instanceof VisionAgentRequestError
             ? error.message
-            : "Unable to start the AI teacher session.",
+            : "無法啟動 AI 老師課程。",
       },
       { status: 500 },
     );
@@ -182,7 +182,7 @@ export async function DELETE(request: Request) {
         error:
           error instanceof VisionAgentRequestError
             ? error.message
-            : "Unable to stop the AI teacher session.",
+            : "無法停止 AI 老師課程。",
       },
       { status: 500 },
     );

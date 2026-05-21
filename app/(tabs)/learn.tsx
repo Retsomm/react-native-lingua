@@ -88,7 +88,7 @@ export default function LearnScreen() {
       >
         <View className="flex-row items-center justify-between">
           <Pressable
-            accessibilityLabel="Go back"
+            accessibilityLabel="返回"
             hitSlop={12}
             onPress={() => router.back()}
             style={({ pressed }) => pressed && styles.pressed}
@@ -101,12 +101,12 @@ export default function LearnScreen() {
               {activeLesson?.title ?? currentUnit?.title ?? selectedLanguage.name}
             </Text>
             <Text className="mt-[4px] font-poppins-medium text-[18px] leading-[25px] text-[#7A84A1]">
-              Unit {currentUnit?.order ?? 1} • {completedCount} / {unitLessons.length} lessons
+              單元 {currentUnit?.order ?? 1} • {completedCount} / {unitLessons.length} 堂課
             </Text>
           </View>
 
           <Pressable
-            accessibilityLabel="Save unit"
+            accessibilityLabel="儲存單元"
             hitSlop={12}
             style={({ pressed }) => pressed && styles.pressed}
           >
@@ -127,12 +127,12 @@ export default function LearnScreen() {
         >
           <SegmentButton
             isActive={activeTab === "lessons"}
-            label="Lessons"
+            label="課程"
             onPress={() => setActiveTab("lessons")}
           />
           <SegmentButton
             isActive={activeTab === "practice"}
-            label="Practice"
+            label="練習"
             onPress={() => setActiveTab("practice")}
           />
         </View>
@@ -160,7 +160,7 @@ export default function LearnScreen() {
             {unitLessons.slice(0, 4).map((lesson, index) => (
               <Pressable
                 key={lesson.id}
-                accessibilityLabel={`Practice ${lesson.title}`}
+                accessibilityLabel={`練習${lesson.title}`}
                 accessibilityRole="button"
                 className="min-h-[96px] flex-row items-center rounded-[18px] border border-[#EEF0F5] bg-white px-[22px] py-[18px]"
                 onPress={() =>
@@ -183,7 +183,7 @@ export default function LearnScreen() {
                     {lesson.title}
                   </Text>
                   <Text className="mt-[4px] font-poppins-medium text-[15px] leading-[22px] text-[#8B94AD]">
-                    {lesson.activities.length} quick practice prompts
+                    {lesson.activities.length} 個快速練習題
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#8B94AD" />

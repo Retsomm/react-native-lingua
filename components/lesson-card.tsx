@@ -20,9 +20,9 @@ type LessonCardProps = {
 };
 
 const statusCopy: Record<LessonStatus, string> = {
-  completed: "Completed",
-  "in-progress": "In progress",
-  "not-started": "0 / 6 lessons",
+  completed: "已完成",
+  "in-progress": "進行中",
+  "not-started": "0 / 6 堂課",
 };
 
 export function LessonCard({
@@ -36,7 +36,7 @@ export function LessonCard({
 
   return (
     <Pressable
-      accessibilityLabel={`Open lesson ${lessonNumber}: ${lesson.title}`}
+      accessibilityLabel={`開啟第 ${lessonNumber} 課：${lesson.title}`}
       accessibilityRole="button"
       className={`min-h-[111px] flex-row items-center rounded-[18px] border bg-white px-[24px] py-[18px] ${
         isActive ? "border-lingua-deep-purple" : "border-[#EEF0F5]"
@@ -54,7 +54,7 @@ export function LessonCard({
             isActive ? "text-lingua-deep-purple" : "text-[#8B94AD]"
           }`}
         >
-          Lesson {lessonNumber}
+          第 {lessonNumber} 課
         </Text>
         <Text className="mt-[12px] font-poppins-semibold text-[18px] leading-[25px] text-lingua-text-primary">
           {lesson.title}

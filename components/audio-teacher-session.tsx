@@ -34,17 +34,17 @@ type LessonControlProps = {
 };
 
 const feedbackMetrics = [
-  { color: "#19D229", label: "Speaking", value: "Excellent" },
-  { color: "#2085FF", label: "Pronunciation", value: "Great" },
-  { color: "#5034FF", label: "Grammar", value: "Good" },
+  { color: "#19D229", label: "口說", value: "很棒" },
+  { color: "#2085FF", label: "發音", value: "很好" },
+  { color: "#5034FF", label: "文法", value: "不錯" },
 ];
 
 const tabItems: { iconName: IoniconName; label: string; route: Href }[] = [
-  { iconName: "home-outline", label: "Home", route: "/home" },
-  { iconName: "book", label: "Learn", route: "/learn" },
-  { iconName: "headset-outline", label: "AI Teacher", route: "/ai-teacher" },
-  { iconName: "chatbubble-outline", label: "Chat", route: "/chat" },
-  { iconName: "person-outline", label: "Profile", route: "/profile" },
+  { iconName: "home-outline", label: "首頁", route: "/home" },
+  { iconName: "book", label: "學習", route: "/learn" },
+  { iconName: "headset-outline", label: "AI 老師", route: "/ai-teacher" },
+  { iconName: "chatbubble-outline", label: "聊天", route: "/chat" },
+  { iconName: "person-outline", label: "個人", route: "/profile" },
 ];
 
 type AudioTeacherSessionProps = {
@@ -71,7 +71,7 @@ export function AudioTeacherSession({
         style={{ paddingBottom: insets.bottom, paddingTop: insets.top }}
       >
         <Text className="text-center font-poppins-semibold text-[22px] leading-[30px] text-lingua-text-primary">
-          Lesson not found
+          找不到課程
         </Text>
         <Pressable
           className="mt-[18px] rounded-[18px] bg-lingua-deep-purple px-[22px] py-[14px]"
@@ -79,7 +79,7 @@ export function AudioTeacherSession({
           style={({ pressed }) => pressed && styles.pressed}
         >
           <Text className="font-poppins-bold text-[16px] leading-[23px] text-white">
-            Go back
+            返回
           </Text>
         </Pressable>
       </View>
@@ -123,7 +123,7 @@ function AudioTeacherSessionContent({
   const previewHeight = Math.min(610, Math.max(540, width * 1.43));
 
   const primaryPhrase = lesson.phrases[0];
-  const languageName = language?.name ?? "Language";
+  const languageName = language?.name ?? "語言";
   const goal = lesson.goals[0] ?? lesson.description;
   const audioCall = useStreamAudioCall({ language, lesson, user });
   const statusCopy = getAudioCallCopy(
@@ -137,7 +137,7 @@ function AudioTeacherSessionContent({
     statusCopy.prompt ??
       primaryPhrase?.translation ??
       primaryPhrase?.phrase ??
-      "Repeat after me.",
+      "跟著我念一次。",
   );
   const latestChatCaption = chatCaptions.at(-1);
   const chatCaptionSignature = `${chatCaptions.length}:${latestChatCaption?.id ?? ""}:${latestChatCaption?.text ?? ""}`;
@@ -162,7 +162,7 @@ function AudioTeacherSessionContent({
     audioCall.streamUser?.name ??
     user?.fullName ??
     user?.primaryEmailAddress?.emailAddress ??
-    "Signed-in learner";
+    "已登入學習者";
 
   const toggleCall = async () => {
     if (audioCall.status === "ending") {
@@ -259,7 +259,7 @@ function AudioTeacherSessionContent({
       >
         <View className="flex-row items-center">
           <Pressable
-            accessibilityLabel="Go back"
+            accessibilityLabel="返回"
             hitSlop={12}
             onPress={() => router.back()}
             style={({ pressed }) => pressed && styles.pressed}
@@ -272,7 +272,7 @@ function AudioTeacherSessionContent({
               className="font-poppins-semibold text-[24px] leading-[31px] text-lingua-text-primary"
               numberOfLines={1}
             >
-              AI Teacher
+              AI 老師
             </Text>
             <View className="mt-[4px] flex-row items-center">
               <View
@@ -290,7 +290,7 @@ function AudioTeacherSessionContent({
           </View>
 
           <HeaderAction
-            accessibilityLabel="Camera unavailable"
+            accessibilityLabel="相機無法使用"
             disabled
             iconName="videocam"
             testID="audio-teacher-header-camera"
@@ -301,7 +301,7 @@ function AudioTeacherSessionContent({
             </Text>
           </View>
           <HeaderAction
-            accessibilityLabel="Notifications unavailable"
+            accessibilityLabel="通知無法使用"
             disabled
             iconName="notifications-outline"
             testID="audio-teacher-header-notifications"
@@ -329,7 +329,7 @@ function AudioTeacherSessionContent({
             </View>
             <View className="rounded-full bg-[#F7F8FC] px-[12px] py-[7px]">
               <Text className="font-poppins-semibold text-[12px] leading-[16px] text-[#5B3BF6]">
-                {audioCall.isMuted ? "Muted" : audioCall.status === "joined" ? "Live" : "Audio"}
+                {audioCall.isMuted ? "已靜音" : audioCall.status === "joined" ? "直播中" : "語音"}
               </Text>
             </View>
           </View>
@@ -339,7 +339,7 @@ function AudioTeacherSessionContent({
               style={{ backgroundColor: agentStatusCopy.color }}
             />
             <Text className="ml-[9px] font-poppins-semibold text-[13px] leading-[18px] text-lingua-text-primary">
-              AI teacher
+              AI 老師
             </Text>
             <Text className="ml-[7px] flex-1 font-poppins-medium text-[13px] leading-[18px] text-[#68718D]">
               {agentStatusCopy.label}
@@ -385,7 +385,7 @@ function AudioTeacherSessionContent({
             iconName="call"
             iconSize={38}
             isActive={canEndCall}
-            label={canEndCall ? "End" : "Call"}
+            label={canEndCall ? "結束" : "通話"}
             onPress={toggleCall}
             tone="call"
           />
@@ -394,7 +394,7 @@ function AudioTeacherSessionContent({
             iconName={isSpeaking ? "send" : "mic"}
             iconSize={34}
             isActive={isSpeaking}
-            label={isSpeaking ? "Send" : "Speak"}
+            label={isSpeaking ? "送出" : "說話"}
             onPress={toggleSpeaking}
             tone="speak"
           />
@@ -422,7 +422,7 @@ function AudioTeacherSessionContent({
 
         <View className="mt-[16px] rounded-[24px] border border-[#EEF0F5] bg-white px-[22px] py-[20px]">
           <Text className="font-poppins-semibold text-[16px] leading-[22px] text-lingua-deep-purple">
-            Lesson goal
+            課程目標
           </Text>
           <Text className="mt-[6px] font-poppins-semibold text-[18px] leading-[26px] text-lingua-text-primary">
             {goal}
@@ -652,73 +652,73 @@ function getAudioCallCopy(
   switch (status) {
     case "starting":
       return {
-        body: "Creating a private Stream audio lesson session.",
-        header: "Starting",
-        prompt: "Setting up your audio lesson...",
+        body: "正在建立私人 Stream 語音課程。",
+        header: "啟動中",
+        prompt: "正在準備你的語音課程...",
         status,
       };
     case "connecting-agent":
       return {
-        body: "Connecting the AI teacher to this lesson call.",
-        header: "Teacher joining",
-        prompt: "Your AI teacher is joining...",
+        body: "正在讓 AI 老師加入這堂課。",
+        header: "老師加入中",
+        prompt: "AI 老師正在加入...",
         status,
       };
     case "ready":
       return {
-        body: "Audio session ready. Tap Call to start with your teacher.",
-        header: "Ready",
-        prompt: "Session ready. Tap Call when you are ready.",
+        body: "語音課程已準備好。點通話開始和老師練習。",
+        header: "已準備",
+        prompt: "課程已準備好，準備好時點通話。",
         status,
       };
     case "joining":
       return {
-        body: "Connecting to the live Stream audio call.",
-        header: "Connecting",
-        prompt: "Connecting your audio...",
+        body: "正在連線到即時 Stream 語音通話。",
+        header: "連線中",
+        prompt: "正在連接你的語音...",
         status,
       };
     case "joined":
       return {
         body: isSpeaking
-          ? "Listening now. Tap Send when you finish speaking."
-          : "You are in the lesson. Tap Speak, then tap Send when you finish.",
-        header: "Live",
-        prompt: isSpeaking ? "Speak now, then tap Send." : "Tap Speak to answer.",
+          ? "正在聆聽。說完後點送出。"
+          : "你已進入課程。點說話，說完後再點送出。",
+        header: "進行中",
+        prompt: isSpeaking ? "現在開始說，說完點送出。" : "點說話來回答。",
         status,
       };
     case "muting":
       return {
-        body: "Updating your Speak and Send controls.",
-        header: "Updating",
-        prompt: "Updating controls...",
+        body: "正在更新說話與送出控制。",
+        header: "更新中",
+        prompt: "正在更新控制...",
         status,
       };
     case "ending":
       return {
-        body: "Ending the Stream audio call.",
-        header: "Ending",
-        prompt: "Ending your lesson call...",
+        body: "正在結束 Stream 語音通話。",
+        header: "結束中",
+        prompt: "正在結束你的課程通話...",
         status,
       };
     case "ended":
       return {
-        body: "Audio call ended. Tap Call to create a new session.",
-        header: "Ended",
-        prompt: "Call ended. Nice practice.",
+        body: "語音通話已結束。點通話建立新的課程。",
+        header: "已結束",
+        prompt: "通話已結束，練習得很好。",
         status,
       };
     case "error":
       return {
-        body: errorMessage ?? "Something went wrong with the audio session.",
-        header: "Needs attention",
-        prompt: "Audio setup needs attention.",
+        body: errorMessage ?? "語音課程發生錯誤。",
+        header: "需要處理",
+        prompt: "語音設定需要處理。",
         status,
       };
     default:
       return {
-        body: "Start a Stream audio session for this selected lesson.",
-        header: "Online",
+        body: "為這堂課開始 Stream 語音課程。",
+        header: "線上",
         prompt: undefined,
         status,
       };
@@ -730,13 +730,13 @@ function getAgentStatusCopy(
 ) {
   switch (status) {
     case "connecting":
-      return { color: "#FFB020", label: "connecting" };
+      return { color: "#FFB020", label: "連線中" };
     case "connected":
-      return { color: "#19D229", label: "connected" };
+      return { color: "#19D229", label: "已連線" };
     case "failed":
-      return { color: "#FF3F46", label: "failed" };
+      return { color: "#FF3F46", label: "連線失敗" };
     default:
-      return { color: "#8B93A8", label: "idle" };
+      return { color: "#8B93A8", label: "待命" };
   }
 }
 
@@ -752,7 +752,7 @@ function getChatCaptions(captions: LiveCaption[], fallbackText: string) {
       isPlaceholder: true,
       role: "teacher" as const,
       speakerId: "lingua-ai-teacher",
-      speakerName: "AI Teacher",
+      speakerName: "AI 老師",
       text: fallbackText,
     },
   ];
@@ -764,6 +764,7 @@ type LessonTabBarProps = {
 
 function LessonTabBar({ activeTabLabel }: LessonTabBarProps) {
   const insets = useSafeAreaInsets();
+  const activeRoute = activeTabLabel === "AI Teacher" ? "/ai-teacher" : "/learn";
 
   return (
     <View
@@ -776,7 +777,7 @@ function LessonTabBar({ activeTabLabel }: LessonTabBarProps) {
         style={styles.tabBar}
       >
         {tabItems.map((item) => {
-          const isActive = item.label === activeTabLabel;
+          const isActive = item.route === activeRoute;
 
           return (
             <Pressable

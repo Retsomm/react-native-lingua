@@ -51,7 +51,7 @@ export default function LessonDetailScreen() {
         style={{ paddingBottom: insets.bottom, paddingTop: insets.top }}
       >
         <Text className="text-center font-poppins-semibold text-[22px] leading-[30px] text-lingua-text-primary">
-          Lesson not found
+          找不到課程
         </Text>
         <Pressable
           className="mt-[18px] rounded-[18px] bg-lingua-deep-purple px-[22px] py-[14px]"
@@ -59,7 +59,7 @@ export default function LessonDetailScreen() {
           style={({ pressed }) => pressed && styles.pressed}
         >
           <Text className="font-poppins-bold text-[16px] leading-[23px] text-white">
-            Go back
+            返回
           </Text>
         </Pressable>
       </View>

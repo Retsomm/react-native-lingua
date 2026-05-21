@@ -25,11 +25,11 @@ const tabIcons: Record<string, TabIconName> = {
 };
 
 const tabLabels: Record<string, string> = {
-  "ai-teacher": "AI Teacher",
-  chat: "Chat",
-  home: "Home",
-  learn: "Learn",
-  profile: "Profile",
+  "ai-teacher": "AI 老師",
+  chat: "聊天",
+  home: "首頁",
+  learn: "學習",
+  profile: "個人",
 };
 
 export function BottomTabBar({

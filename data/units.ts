@@ -4,8 +4,8 @@ export const units: Unit[] = [
   {
     id: "spanish-basics",
     languageId: "spanish",
-    title: "Spanish Basics",
-    description: "Say hello, introduce yourself, and answer simple questions.",
+    title: "西班牙文基礎",
+    description: "練習打招呼、自我介紹與回答簡單問題。",
     order: 1,
     color: "#ff6b6b",
     lessonIds: [
@@ -20,8 +20,8 @@ export const units: Unit[] = [
   {
     id: "french-basics",
     languageId: "french",
-    title: "French Basics",
-    description: "Use polite greetings and beginner cafe phrases.",
+    title: "法文基礎",
+    description: "練習禮貌問候與初學者常用咖啡店短句。",
     order: 1,
     color: "#4d96ff",
     lessonIds: [
@@ -36,8 +36,8 @@ export const units: Unit[] = [
   {
     id: "japanese-basics",
     languageId: "japanese",
-    title: "Japanese Basics",
-    description: "Practice daily greetings and simple classroom language.",
+    title: "日文基礎",
+    description: "練習日常問候與簡單課堂用語。",
     order: 1,
     color: "#ff8fab",
     lessonIds: [
@@ -52,8 +52,8 @@ export const units: Unit[] = [
   {
     id: "korean-basics",
     languageId: "korean",
-    title: "Korean Basics",
-    description: "Practice greetings, daily life, travel, shopping, and family words.",
+    title: "韓文基礎",
+    description: "練習問候、日常生活、旅行、購物與家人朋友詞彙。",
     order: 1,
     color: "#7c3aed",
     lessonIds: [
@@ -68,8 +68,8 @@ export const units: Unit[] = [
   {
     id: "chinese-basics",
     languageId: "chinese",
-    title: "Chinese Basics",
-    description: "Build Mandarin confidence with short everyday lessons.",
+    title: "國語基礎",
+    description: "用短小的日常課程建立國語信心。",
     order: 1,
     color: "#ef4444",
     lessonIds: [
@@ -84,8 +84,8 @@ export const units: Unit[] = [
   {
     id: "english-basics",
     languageId: "english",
-    title: "English Basics",
-    description: "Learn useful English for introductions, travel, and daily routines.",
+    title: "英文基礎",
+    description: "學習自我介紹、旅行與日常生活常用英文。",
     order: 1,
     color: "#2563eb",
     lessonIds: [
