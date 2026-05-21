@@ -25,8 +25,13 @@ export function createLesson(
   unitId: string,
   seed: LessonSeed,
 ): Lesson {
-  const primaryVocabulary = seed.vocabulary[0];
-  const secondaryVocabulary = seed.vocabulary[1] ?? seed.vocabulary[0];
+  const vocabulary = Array.isArray(seed.vocabulary) ? seed.vocabulary : [];
+  const primaryVocabulary = vocabulary[0];
+  const secondaryVocabulary = vocabulary[1] ?? primaryVocabulary;
+
+  if (!primaryVocabulary || !secondaryVocabulary) {
+    throw new Error(`Lesson ${seed.id} must include at least one vocabulary item.`);
+  }
 
   return {
     id: seed.id,
@@ -43,7 +48,7 @@ export function createLesson(
       `用簡短回答練習「${seed.phrase.phrase}」。`,
       "透過適合初學者的重複練習建立信心。",
     ],
-    vocabulary: seed.vocabulary.map((item, index) => ({
+    vocabulary: vocabulary.map((item, index) => ({
       id: `${seed.id}-vocab-${index + 1}`,
       ...item,
     })),
@@ -80,7 +85,7 @@ export function createLesson(
         pronunciation: seed.phrase.pronunciation,
       },
     ],
-    aiTeacherPrompt: `這是一堂溫暖、初學者友善的 ${languageId} 課程。除了目標語言單字或短句以外，請全程使用台灣國語和繁體中文說明。這堂課只練習 ${seed.vocabulary
+    aiTeacherPrompt: `這是一堂溫暖、初學者友善的 ${languageId} 課程。除了目標語言單字或短句以外，請全程使用台灣國語和繁體中文說明。這堂課只練習 ${vocabulary
       .slice(0, 2)
       .map((item) => item.term)
       .join("、")} 和 ${seed.phrase.phrase}。請慢慢念目標項目，說明國語意思，聆聽學習者回答，給一句簡短鼓勵，並請他跟讀或再試一次。`,

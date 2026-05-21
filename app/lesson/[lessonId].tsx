@@ -68,7 +68,7 @@ export default function LessonDetailScreen() {
 
   return (
     <AudioTeacherSession
-      activeTabLabel="Learn"
+      activeTabRoute="/learn"
       autoStartCall
       lesson={lesson}
       onCallEnded={() => {

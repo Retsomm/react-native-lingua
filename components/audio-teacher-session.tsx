@@ -48,7 +48,7 @@ const tabItems: { iconName: IoniconName; label: string; route: Href }[] = [
 ];
 
 type AudioTeacherSessionProps = {
-  activeTabLabel?: "AI Teacher" | "Learn";
+  activeTabRoute?: "/ai-teacher" | "/learn";
   autoStartCall?: boolean;
   lesson?: Lesson;
   onCallEnded?: () => void;
@@ -56,7 +56,7 @@ type AudioTeacherSessionProps = {
 };
 
 export function AudioTeacherSession({
-  activeTabLabel = "AI Teacher",
+  activeTabRoute = "/ai-teacher",
   autoStartCall = false,
   lesson,
   onCallEnded,
@@ -88,7 +88,7 @@ export function AudioTeacherSession({
 
   return (
     <AudioTeacherSessionContent
-      activeTabLabel={activeTabLabel}
+      activeTabRoute={activeTabRoute}
       autoStartCall={autoStartCall}
       lesson={lesson}
       onCallEnded={onCallEnded}
@@ -98,7 +98,7 @@ export function AudioTeacherSession({
 }
 
 type AudioTeacherSessionContentProps = {
-  activeTabLabel: "AI Teacher" | "Learn";
+  activeTabRoute: "/ai-teacher" | "/learn";
   autoStartCall: boolean;
   lesson: Lesson;
   onCallEnded?: () => void;
@@ -106,7 +106,7 @@ type AudioTeacherSessionContentProps = {
 };
 
 function AudioTeacherSessionContent({
-  activeTabLabel,
+  activeTabRoute,
   autoStartCall,
   lesson,
   onCallEnded,
@@ -450,7 +450,7 @@ function AudioTeacherSessionContent({
         </View>
       </ScrollView>
 
-      {showEmbeddedTabBar ? <LessonTabBar activeTabLabel={activeTabLabel} /> : null}
+      {showEmbeddedTabBar ? <LessonTabBar activeTabRoute={activeTabRoute} /> : null}
     </View>
   );
 
@@ -759,12 +759,11 @@ function getChatCaptions(captions: LiveCaption[], fallbackText: string) {
 }
 
 type LessonTabBarProps = {
-  activeTabLabel: "AI Teacher" | "Learn";
+  activeTabRoute: "/ai-teacher" | "/learn";
 };
 
-function LessonTabBar({ activeTabLabel }: LessonTabBarProps) {
+function LessonTabBar({ activeTabRoute }: LessonTabBarProps) {
   const insets = useSafeAreaInsets();
-  const activeRoute = activeTabLabel === "AI Teacher" ? "/ai-teacher" : "/learn";
 
   return (
     <View
@@ -777,7 +776,7 @@ function LessonTabBar({ activeTabLabel }: LessonTabBarProps) {
         style={styles.tabBar}
       >
         {tabItems.map((item) => {
-          const isActive = item.route === activeRoute;
+          const isActive = item.route === activeTabRoute;
 
           return (
             <Pressable

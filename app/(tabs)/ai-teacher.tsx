@@ -13,7 +13,7 @@ export default function AiTeacherScreen() {
     [selectedLanguageId],
   );
 
-  return <AudioTeacherSession activeTabLabel="AI Teacher" lesson={lesson} />;
+  return <AudioTeacherSession activeTabRoute="/ai-teacher" lesson={lesson} />;
 }
 
 function getTeacherLesson(languageId: string): Lesson | undefined {
