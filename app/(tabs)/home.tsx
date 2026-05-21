@@ -1,8 +1,10 @@
 import { images } from "@/constants/images";
+import { appThemeColors } from "@/constants/theme";
 import { languages } from "@/data/languages";
 import { lessons } from "@/data/lessons";
 import { units } from "@/data/units";
 import { useLanguageStore } from "@/store/UseLanguageStore";
+import { useThemeStore } from "@/store/use-theme-store";
 import { Ionicons } from "@expo/vector-icons";
 import { useUser } from "@clerk/expo";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -17,6 +19,8 @@ export default function HomeScreen() {
   const { user } = useUser();
   const posthog = usePostHog();
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
 
   const selectedLanguage =
     languages.find((language) => language.id === selectedLanguageId) ?? languages[0];
@@ -38,7 +42,7 @@ export default function HomeScreen() {
     user?.firstName ?? user?.fullName?.split(" ")[0] ?? user?.username ?? "學習者";
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-lingua-background">
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -50,7 +54,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row items-center">
-          <View className="h-[42px] w-[42px] items-center justify-center overflow-hidden rounded-full bg-white">
+          <View className="h-[42px] w-[42px] items-center justify-center overflow-hidden rounded-full bg-lingua-surface-muted">
             <Image
               source={images.flags[selectedLanguage.flagKey]}
               className="h-[42px] w-[42px]"
@@ -68,7 +72,7 @@ export default function HomeScreen() {
               className="h-[34px] w-[34px]"
               resizeMode="contain"
             />
-            <Text className="ml-[6px] font-poppins-semibold text-[18px] leading-[25px] text-[#48516D]">
+            <Text className="ml-[6px] font-poppins-semibold text-[18px] leading-[25px] text-lingua-text-secondary">
               12
             </Text>
           </View>
@@ -78,24 +82,28 @@ export default function HomeScreen() {
             hitSlop={12}
             style={({ pressed }) => pressed && styles.pressed}
           >
-            <Ionicons name="notifications-outline" size={30} color="#0D132B" />
+            <Ionicons
+              name="notifications-outline"
+              size={30}
+              color={colors.textPrimary}
+            />
           </Pressable>
         </View>
 
-        <View className="mt-[45px] flex-row items-center rounded-[18px] bg-[#FFF8EF] px-[24px] py-[22px]">
+        <View className="mt-[45px] flex-row items-center rounded-[18px] bg-lingua-goal-soft px-[24px] py-[22px]">
           <View className="flex-1">
-            <Text className="font-poppins-semibold text-[17px] leading-[24px] text-[#34405C]">
+            <Text className="font-poppins-semibold text-[17px] leading-[24px] text-lingua-text-primary">
               今日目標
             </Text>
             <View className="mt-[10px] flex-row items-end">
-              <Text className="font-poppins-bold text-[32px] leading-[40px] text-[#17203E]">
+              <Text className="font-poppins-bold text-[32px] leading-[40px] text-lingua-text-primary">
                 {earnedXp}
               </Text>
-              <Text className="mb-[5px] ml-[8px] font-poppins-semibold text-[17px] leading-[24px] text-[#7D87A3]">
+              <Text className="mb-[5px] ml-[8px] font-poppins-semibold text-[17px] leading-[24px] text-lingua-text-tertiary">
                 / {DAILY_GOAL_XP} XP
               </Text>
             </View>
-            <View className="mt-[20px] h-[8px] overflow-hidden rounded-full bg-[#FFE5C7]">
+            <View className="mt-[20px] h-[8px] overflow-hidden rounded-full bg-lingua-goal-track">
               <View
                 className="h-full rounded-full bg-[#FF7A00]"
                 style={{ width: `${dailyProgress}%` as const }}
@@ -131,7 +139,7 @@ export default function HomeScreen() {
 
           <Pressable
             accessibilityRole="button"
-            className="mt-[18px] h-[49px] w-[126px] items-center justify-center rounded-[15px] bg-white"
+            className="mt-[18px] h-[49px] w-[126px] items-center justify-center rounded-[15px] bg-lingua-background"
             style={({ pressed }) => [styles.continueButton, pressed && styles.pressed]}
             onPress={() =>
               posthog.capture("continue_learning_tapped", {
@@ -212,14 +220,14 @@ function PlanRow({
         <Text className="font-poppins-semibold text-[18px] leading-[25px] text-lingua-text-primary">
           {title}
         </Text>
-        <Text className="mt-[3px] font-poppins-medium text-[16px] leading-[23px] text-[#7F89A5]">
+        <Text className="mt-[3px] font-poppins-medium text-[16px] leading-[23px] text-lingua-text-tertiary">
           {subtitle}
         </Text>
       </View>
 
       <View
         className={`h-[29px] w-[29px] items-center justify-center rounded-full ${
-          isComplete ? "bg-lingua-deep-purple" : "border-2 border-[#8C94AE]"
+          isComplete ? "bg-lingua-deep-purple" : "border-2 border-lingua-text-tertiary"
         }`}
       >
         {isComplete ? <Ionicons name="checkmark" size={19} color="#FFFFFF" /> : null}

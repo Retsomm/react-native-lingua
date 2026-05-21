@@ -5,12 +5,17 @@ import { tokenCache } from "@clerk/expo/token-cache";
 import { useFonts } from "expo-font";
 import { Stack, useGlobalSearchParams, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import * as SystemUI from "expo-system-ui";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef } from "react";
+import { View } from "react-native";
 import { PostHogProvider } from "posthog-react-native";
+import { appThemeColors } from "@/constants/theme";
 import { identifyPostHogUser } from "@/lib/analytics";
 import { posthog } from "@/lib/posthog";
 import { useLanguageStore } from "@/store/UseLanguageStore";
+import { useThemeStore } from "@/store/use-theme-store";
 
 SplashScreen.preventAutoHideAsync();
 WebBrowser.maybeCompleteAuthSession();
@@ -60,6 +65,28 @@ function PostHogUserIdentifier() {
   }, [isLoaded, isSignedIn, selectedLanguageId, userId]);
 
   return null;
+}
+
+function AppThemeBoundary() {
+  const theme = useThemeStore((state) => state.theme);
+  const hasHydratedTheme = useThemeStore((state) => state.hasHydrated);
+  const activeTheme = hasHydratedTheme ? theme : "light";
+  const colors = appThemeColors[activeTheme];
+
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(colors.background).catch((systemUiError) => {
+      console.error("Failed to update system UI theme color", systemUiError);
+    });
+  }, [colors.background]);
+
+  return (
+    <View
+      className={`flex-1 bg-lingua-background ${activeTheme === "dark" ? "theme-dark" : ""}`}
+    >
+      <StatusBar style={activeTheme === "dark" ? "light" : "dark"} />
+      <Stack screenOptions={{ headerShown: false }} />
+    </View>
+  );
 }
 
 export default function RootLayout() {
@@ -121,7 +148,7 @@ export default function RootLayout() {
     >
       <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
         <PostHogUserIdentifier />
-        <Stack screenOptions={{ headerShown: false }} />
+        <AppThemeBoundary />
       </ClerkProvider>
     </PostHogProvider>
   );

@@ -1,5 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { images } from "@/constants/images";
+import { useThemeStore } from "@/store/use-theme-store";
 import { Redirect, router } from "expo-router";
 import { Image, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,9 +10,10 @@ export default function OnboardingScreen() {
   const { isLoaded, isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
   const posthog = usePostHog();
+  const theme = useThemeStore((state) => state.theme);
 
   if (!isLoaded) {
-    return null;
+    return <View className="flex-1 bg-lingua-background" />;
   }
 
   if (isSignedIn) {
@@ -20,7 +22,7 @@ export default function OnboardingScreen() {
 
   return (
     <View
-      className="flex-1 overflow-hidden bg-white"
+      className="flex-1 overflow-hidden bg-lingua-background"
       style={{
         paddingBottom: Math.max(insets.bottom, 20) + 12,
         paddingHorizontal: 32,
@@ -44,7 +46,7 @@ export default function OnboardingScreen() {
             你的 AI 語言{"\n"}
             <Text className="text-lingua-deep-purple">老師。</Text>
           </Text>
-          <Text className="mt-[16px] font-poppins text-[19px] leading-[27px] text-[#69728c]">
+          <Text className="mt-[16px] font-poppins text-[19px] leading-[27px] text-lingua-text-secondary">
             真實對話、個人化課程，隨時隨地{"\n"}
             都能開始練習。
           </Text>
@@ -57,7 +59,10 @@ export default function OnboardingScreen() {
           <Text className="absolute right-[2px] top-[42px] font-poppins-bold text-[14px] leading-[18px] text-lingua-text-primary">
             ¡Hola!
           </Text>
-          <Text className="absolute right-[5px] top-[252px] font-poppins-bold text-[14px] leading-[18px] text-[#ff6b7a]">
+          <Text
+            className="absolute right-[5px] top-[252px] font-poppins-bold text-[14px] leading-[18px]"
+            style={{ color: theme === "dark" ? "#FF8FA0" : "#FF6B7A" }}
+          >
             你好!
           </Text>
 

@@ -1,6 +1,8 @@
 import { images } from "@/constants/images";
+import { appThemeColors } from "@/constants/theme";
 import { identifyPostHogUser } from "@/lib/analytics";
 import { useLanguageStore } from "@/store/UseLanguageStore";
+import { useThemeStore } from "@/store/use-theme-store";
 import { useAuth, useSignIn, useSignUp, useSSO } from "@clerk/expo";
 import {
   AntDesign,
@@ -11,7 +13,7 @@ import {
 import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -39,27 +41,22 @@ type AuthScreenProps = {
 
 const socialProviders = [
   {
-    icon: <AntDesign name="google" size={28} color="#4285F4" />,
     label: "使用 Google 繼續",
     strategy: "oauth_google",
   },
   {
-    icon: <FontAwesome5 name="line" size={30} color="#06C755" />,
     label: "使用 LINE 繼續",
     strategy: "oauth_line",
   },
   {
-    icon: <FontAwesome name="github" size={31} color="#06112B" />,
     label: "使用 GitHub 繼續",
     strategy: "oauth_github",
   },
   {
-    icon: <FontAwesome name="apple" size={32} color="#06112B" />,
     label: "使用 Apple 繼續",
     strategy: "oauth_apple",
   },
 ] satisfies {
-  icon: ReactNode;
   label: string;
   strategy: SocialStrategy;
 }[];
@@ -118,8 +115,23 @@ function getStableUserId(resource: unknown) {
   return undefined;
 }
 
+function getSocialProviderIcon(strategy: SocialStrategy, textColor: string) {
+  switch (strategy) {
+    case "oauth_google":
+      return <AntDesign name="google" size={28} color="#4285F4" />;
+    case "oauth_line":
+      return <FontAwesome5 name="line" size={30} color="#06C755" />;
+    case "oauth_github":
+      return <FontAwesome name="github" size={31} color={textColor} />;
+    case "oauth_apple":
+      return <FontAwesome name="apple" size={32} color={textColor} />;
+  }
+}
+
 export function AuthScreen({ mode }: AuthScreenProps) {
   const insets = useSafeAreaInsets();
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
   const { signIn, fetchStatus: signInStatus } = useSignIn();
   const { signUp, fetchStatus: signUpStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
@@ -355,7 +367,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
   return (
     <>
       <ScrollView
-        style={styles.scrollView}
+        style={[styles.scrollView, { backgroundColor: colors.background }]}
         contentContainerStyle={{
           flexGrow: 1,
           paddingBottom: Math.max(insets.bottom, 28) + 18,
@@ -371,14 +383,14 @@ export function AuthScreen({ mode }: AuthScreenProps) {
             className="h-[38px] w-[38px] items-start justify-center"
             onPress={() => router.back()}
           >
-            <Ionicons name="chevron-back" size={34} color="#06112B" />
+            <Ionicons name="chevron-back" size={34} color={colors.textPrimary} />
           </Pressable>
 
           <View className="mt-[18px]">
             <Text className="font-poppins-bold text-[31px] leading-[40px] text-lingua-text-primary">
               {isSignUp ? "建立你的帳號" : "歡迎回來"}
             </Text>
-            <Text className="mt-[16px] font-poppins text-[19px] leading-[27px] text-[#69728c]">
+            <Text className="mt-[16px] font-poppins text-[19px] leading-[27px] text-lingua-text-secondary">
               {isSignUp
                 ? "今天開始你的語言學習旅程 "
                 : "繼續你的語言學習旅程 "}
@@ -398,8 +410,8 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           </View>
 
           <View className="gap-[16px]">
-            <View className="h-[86px] justify-center rounded-[16px] border border-[#eef0f5] bg-white px-[19px]">
-              <Text className="font-poppins-medium text-[15px] leading-[21px] text-[#77819b]">
+            <View className="h-[86px] justify-center rounded-[16px] border border-lingua-border-soft bg-lingua-background px-[19px]">
+              <Text className="font-poppins-medium text-[15px] leading-[21px] text-lingua-text-tertiary">
                 電子郵件
               </Text>
               <TextInput
@@ -408,27 +420,27 @@ export function AuthScreen({ mode }: AuthScreenProps) {
                 keyboardType="email-address"
                 onChangeText={setEmailAddress}
                 placeholder="alex@gmail.com"
-                placeholderTextColor="#06112B"
+                placeholderTextColor={colors.textTertiary}
                 textContentType="emailAddress"
                 value={emailAddress}
-                style={styles.textInput}
+                style={[styles.textInput, { color: colors.textPrimary }]}
               />
             </View>
 
             {isSignUp ? (
-              <View className="h-[86px] flex-row items-center rounded-[16px] border border-[#eef0f5] bg-white px-[19px]">
+              <View className="h-[86px] flex-row items-center rounded-[16px] border border-lingua-border-soft bg-lingua-background px-[19px]">
                 <View className="flex-1">
-                  <Text className="font-poppins-medium text-[15px] leading-[21px] text-[#77819b]">
+                  <Text className="font-poppins-medium text-[15px] leading-[21px] text-lingua-text-tertiary">
                     密碼
                   </Text>
                   <TextInput
                     onChangeText={setPassword}
                     secureTextEntry={!isPasswordVisible}
                     placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
-                    placeholderTextColor="#06112B"
+                    placeholderTextColor={colors.textTertiary}
                     textContentType="newPassword"
                     value={password}
-                    style={styles.textInput}
+                    style={[styles.textInput, { color: colors.textPrimary }]}
                   />
                 </View>
                 <Pressable
@@ -441,7 +453,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
                   <Ionicons
                     name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
                     size={28}
-                    color="#77819b"
+                    color={colors.textTertiary}
                   />
                 </Pressable>
               </View>
@@ -464,22 +476,24 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           ) : null}
 
           <View className="mt-[35px] flex-row items-center gap-[20px]">
-            <View className="h-px flex-1 bg-[#e8eaf1]" />
-            <Text className="font-poppins text-[18px] leading-[24px] text-[#77819b]">
+            <View className="h-px flex-1 bg-lingua-border" />
+            <Text className="font-poppins text-[18px] leading-[24px] text-lingua-text-tertiary">
               或使用以下方式繼續
             </Text>
-            <View className="h-px flex-1 bg-[#e8eaf1]" />
+            <View className="h-px flex-1 bg-lingua-border" />
           </View>
 
           <View className="mt-[25px] gap-[14px]">
             {socialProviders.map((provider) => (
               <Pressable
                 key={provider.label}
-                className="h-[64px] flex-row items-center rounded-[16px] border border-[#f0f1f5] bg-white px-[42px]"
+                className="h-[64px] flex-row items-center rounded-[16px] border border-lingua-border-soft bg-lingua-background px-[42px]"
                 disabled={isSubmitting}
                 onPress={() => handleSocialAuth(provider.strategy)}
               >
-                <View className="w-[48px] items-start">{provider.icon}</View>
+                <View className="w-[48px] items-start">
+                  {getSocialProviderIcon(provider.strategy, colors.textPrimary)}
+                </View>
                 <Text className="font-poppins-medium text-[18px] leading-[24px] text-lingua-text-primary">
                   {provider.label}
                 </Text>
@@ -490,7 +504,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           <View className="flex-1" />
 
           <View className="mt-[44px] flex-row justify-center">
-            <Text className="font-poppins text-[17px] leading-[24px] text-[#77819b]">
+            <Text className="font-poppins text-[17px] leading-[24px] text-lingua-text-tertiary">
               {isSignUp ? "已經有帳號了嗎？" : "還沒有帳號嗎？"}
             </Text>
             <Pressable
@@ -532,6 +546,8 @@ function VerificationModal({
 }: VerificationModalProps) {
   const [code, setCode] = useState("");
   const inputRef = useRef<TextInput>(null);
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
 
   useEffect(() => {
     if (visible) {
@@ -560,12 +576,12 @@ function VerificationModal({
         style={styles.verificationKeyboardView}
       >
         <Pressable className="flex-1" onPress={onClose} />
-        <View className="rounded-t-[28px] bg-white px-[28px] pb-[34px] pt-[28px]">
-          <View className="mx-auto h-[4px] w-[48px] rounded-full bg-[#d9dde8]" />
+        <View className="rounded-t-[28px] bg-lingua-background px-[28px] pb-[34px] pt-[28px]">
+          <View className="mx-auto h-[4px] w-[48px] rounded-full bg-lingua-border" />
           <Text className="mt-[28px] text-center font-poppins-bold text-[24px] leading-[31px] text-lingua-text-primary">
             查看你的電子郵件
           </Text>
-          <Text className="mt-[10px] text-center font-poppins text-[15px] leading-[23px] text-[#69728c]">
+          <Text className="mt-[10px] text-center font-poppins text-[15px] leading-[23px] text-lingua-text-secondary">
             我們已寄出驗證碼，請輸入下方 6 位數字。
           </Text>
           {error ? (
@@ -581,7 +597,7 @@ function VerificationModal({
             {Array.from({ length: 6 }).map((_, index) => (
               <View
                 key={index}
-                className="h-[52px] w-[44px] items-center justify-center rounded-[12px] border border-[#e7e9f0] bg-white"
+                className="h-[52px] w-[44px] items-center justify-center rounded-[12px] border border-lingua-border-soft bg-lingua-background"
               >
                 <Text className="font-poppins-bold text-[22px] leading-[29px] text-lingua-text-primary">
                   {code[index] ?? ""}
@@ -599,7 +615,7 @@ function VerificationModal({
             editable={!isSubmitting}
             textContentType="oneTimeCode"
             value={code}
-            style={styles.hiddenCodeInput}
+            style={[styles.hiddenCodeInput, { color: colors.textPrimary }]}
           />
         </View>
       </KeyboardAvoidingView>

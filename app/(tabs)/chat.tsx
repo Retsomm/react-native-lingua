@@ -1,9 +1,11 @@
 import { ChatInputBar } from "@/components/chat-input-bar";
 import { ChatMessageBubble } from "@/components/chat-message-bubble";
+import { appThemeColors } from "@/constants/theme";
 import { defaultLanguageId, languages } from "@/data/languages";
 import { createMockTutorReply } from "@/features/chat/tutor-reply";
 import { useChatStore, type ChatMessage } from "@/store/use-chat-store";
 import { useLanguageStore } from "@/store/UseLanguageStore";
+import { useThemeStore } from "@/store/use-theme-store";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -44,6 +46,8 @@ export default function ChatScreen() {
   const sendUserMessage = useChatStore((state) => state.sendUserMessage);
   const addAssistantMessage = useChatStore((state) => state.addAssistantMessage);
   const clearMessages = useChatStore((state) => state.clearMessages);
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
 
   const storedMessages = useMemo(
     () =>
@@ -99,13 +103,13 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.keyboardRoot}
     >
-      <View className="flex-1 bg-[#EEF0FF]">
+      <View className="flex-1 bg-lingua-surface">
         <View
           className="bg-lingua-deep-purple px-[18px] pb-[12px]"
           style={{ paddingTop: Math.max(insets.top, 12) + 8 }}
         >
           <View className="flex-row items-center">
-            <View className="h-[42px] w-[42px] items-center justify-center rounded-full bg-white">
+            <View className="h-[42px] w-[42px] items-center justify-center rounded-full bg-lingua-background">
               <Text className="font-poppins-bold text-[16px] leading-[22px] text-lingua-deep-purple">
                 AI
               </Text>
@@ -157,8 +161,11 @@ export default function ChatScreen() {
                 <Pressable
                   key={prompt}
                   accessibilityRole="button"
-                  className="rounded-full bg-white/90 px-[13px] py-[8px]"
-                  style={({ pressed }) => pressed && styles.pressed}
+                  className="rounded-full bg-lingua-background px-[13px] py-[8px]"
+                  style={({ pressed }) => [
+                    { borderColor: colors.borderSoft, borderWidth: 1 },
+                    pressed && styles.pressed,
+                  ]}
                   onPress={() => handleSend(prompt)}
                 >
                   <Text className="font-poppins-semibold text-[13px] leading-[18px] text-lingua-deep-purple">

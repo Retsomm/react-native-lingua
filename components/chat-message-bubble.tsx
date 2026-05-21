@@ -1,4 +1,6 @@
+import { appThemeColors } from "@/constants/theme";
 import type { ChatMessage } from "@/store/use-chat-store";
+import { useThemeStore } from "@/store/use-theme-store";
 import { Text, View } from "react-native";
 
 type ChatMessageBubbleProps = {
@@ -28,6 +30,8 @@ export function ChatMessageBubble({
   showAvatar = true,
 }: ChatMessageBubbleProps) {
   const isUser = message.sender === "user";
+  const theme = useThemeStore((state) => state.theme);
+  const colors = appThemeColors[theme];
 
   return (
     <View
@@ -50,12 +54,13 @@ export function ChatMessageBubble({
           className={`rounded-[18px] px-[14px] py-[10px] ${
             isUser
               ? "rounded-tr-[4px] bg-lingua-deep-purple"
-              : "rounded-tl-[4px] bg-white"
+              : "rounded-tl-[4px] bg-lingua-background"
           }`}
+          style={!isUser ? { borderColor: colors.borderSoft, borderWidth: 1 } : undefined}
         >
           <Text
             className={`font-poppins-medium text-[15px] leading-[22px] ${
-              isUser ? "text-white" : "text-[#111827]"
+              isUser ? "text-white" : "text-lingua-text-primary"
             }`}
           >
             {message.text}
@@ -64,11 +69,11 @@ export function ChatMessageBubble({
 
         <View className={`pb-[2px] ${isUser ? "items-end" : "items-start"}`}>
           {isUser && message.status ? (
-            <Text className="font-poppins-medium text-[10px] leading-[14px] text-[#536376]">
+            <Text className="font-poppins-medium text-[10px] leading-[14px] text-lingua-text-tertiary">
               {getStatusLabel(message.status)}
             </Text>
           ) : null}
-          <Text className="font-poppins-medium text-[10px] leading-[14px] text-[#536376]">
+          <Text className="font-poppins-medium text-[10px] leading-[14px] text-lingua-text-tertiary">
             {formatMessageTime(message.createdAt)}
           </Text>
         </View>
