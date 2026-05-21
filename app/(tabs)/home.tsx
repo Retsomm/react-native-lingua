@@ -35,7 +35,7 @@ export default function HomeScreen() {
   const earnedXp = Math.min(PREVIEW_EARNED_XP, DAILY_GOAL_XP);
   const dailyProgress = (earnedXp / DAILY_GOAL_XP) * 100;
   const firstName =
-    user?.firstName ?? user?.fullName?.split(" ")[0] ?? user?.username ?? "Learner";
+    user?.firstName ?? user?.fullName?.split(" ")[0] ?? user?.username ?? "學習者";
 
   return (
     <View className="flex-1 bg-white">
@@ -59,7 +59,7 @@ export default function HomeScreen() {
           </View>
 
           <Text className="ml-[13px] flex-1 font-poppins-semibold text-[20px] leading-[28px] text-lingua-text-primary">
-            Hola, {firstName}! 👋
+            你好，{firstName}！👋
           </Text>
 
           <View className="mr-[22px] flex-row items-center">
@@ -74,7 +74,7 @@ export default function HomeScreen() {
           </View>
 
           <Pressable
-            accessibilityLabel="Notifications"
+            accessibilityLabel="通知"
             hitSlop={12}
             style={({ pressed }) => pressed && styles.pressed}
           >
@@ -85,7 +85,7 @@ export default function HomeScreen() {
         <View className="mt-[45px] flex-row items-center rounded-[18px] bg-[#FFF8EF] px-[24px] py-[22px]">
           <View className="flex-1">
             <Text className="font-poppins-semibold text-[17px] leading-[24px] text-[#34405C]">
-              Daily goal
+              今日目標
             </Text>
             <View className="mt-[10px] flex-row items-end">
               <Text className="font-poppins-bold text-[32px] leading-[40px] text-[#17203E]">
@@ -120,13 +120,13 @@ export default function HomeScreen() {
           />
 
           <Text className="font-poppins-semibold text-[17px] leading-[24px] text-white">
-            Continue learning
+            繼續學習
           </Text>
           <Text className="mt-[13px] font-poppins-semibold text-[29px] leading-[37px] text-white">
             {selectedLanguage.name}
           </Text>
           <Text className="mt-[2px] font-poppins-medium text-[19px] leading-[27px] text-white">
-            A1 · Unit {currentUnit?.order ?? 1}
+            A1 · 單元 {currentUnit?.order ?? 1}
           </Text>
 
           <Pressable
@@ -141,18 +141,18 @@ export default function HomeScreen() {
             }
           >
             <Text className="font-poppins-bold text-[18px] leading-[25px] text-lingua-deep-purple">
-              Continue
+              繼續
             </Text>
           </Pressable>
         </View>
 
         <View className="mt-[31px] flex-row items-center justify-between">
           <Text className="font-poppins-semibold text-[21px] leading-[29px] text-lingua-text-primary">
-            {"Today's plan"}
+            今日計畫
           </Text>
           <Pressable hitSlop={10} style={({ pressed }) => pressed && styles.pressed}>
             <Text className="font-poppins-bold text-[19px] leading-[27px] text-lingua-deep-purple">
-              View all
+              查看全部
             </Text>
           </Pressable>
         </View>
@@ -161,18 +161,18 @@ export default function HomeScreen() {
           <PlanRow
             iconName="book"
             isComplete
-            subtitle={currentLesson?.title ?? "Start your first lesson"}
-            title="Lesson"
+            subtitle={currentLesson?.title ?? "開始第一堂課"}
+            title="課程"
           />
           <PlanRow
             iconName="headset"
-            subtitle="Talk about your day"
-            title="AI Conversation"
+            subtitle="聊聊你今天過得如何"
+            title="AI 對話"
           />
           <PlanRow
             iconName="chatbox-ellipses"
-            subtitle={`${Math.max(vocabularyCount, 1)} words`}
-            title="New words"
+            subtitle={`${Math.max(vocabularyCount, 1)} 個單字`}
+            title="新單字"
             variant="coral"
           />
         </View>

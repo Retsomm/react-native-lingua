@@ -40,22 +40,22 @@ type AuthScreenProps = {
 const socialProviders = [
   {
     icon: <AntDesign name="google" size={28} color="#4285F4" />,
-    label: "Continue with Google",
+    label: "使用 Google 繼續",
     strategy: "oauth_google",
   },
   {
     icon: <FontAwesome5 name="line" size={30} color="#06C755" />,
-    label: "Continue with LINE",
+    label: "使用 LINE 繼續",
     strategy: "oauth_line",
   },
   {
     icon: <FontAwesome name="github" size={31} color="#06112B" />,
-    label: "Continue with GitHub",
+    label: "使用 GitHub 繼續",
     strategy: "oauth_github",
   },
   {
     icon: <FontAwesome name="apple" size={32} color="#06112B" />,
-    label: "Continue with Apple",
+    label: "使用 Apple 繼續",
     strategy: "oauth_apple",
   },
 ] satisfies {
@@ -66,18 +66,18 @@ const socialProviders = [
 
 function getPendingSignUpMessage(status: string | null) {
   if (status === "missing_requirements") {
-    return "Your account needs a little more information before sign up can finish.";
+    return "完成註冊前，這個帳號還需要補充一些資訊。";
   }
 
-  return "Sign up is not complete yet. Please finish the required account steps.";
+  return "註冊尚未完成，請先完成必要的帳號步驟。";
 }
 
 function getPendingSignInMessage(status: string | null) {
   if (status === "needs_second_factor" || status === "needs_client_trust") {
-    return "This account needs another verification step before sign in can finish.";
+    return "這個帳號需要完成另一個驗證步驟才能登入。";
   }
 
-  return "Sign in is not complete yet. Please finish the required account steps.";
+  return "登入尚未完成，請先完成必要的帳號步驟。";
 }
 
 function getAuthErrorMessage(error: unknown) {
@@ -90,7 +90,7 @@ function getAuthErrorMessage(error: unknown) {
     return error.message;
   }
 
-  return "Something went wrong. Please try again.";
+  return "發生錯誤，請再試一次。";
 }
 
 function getStableUserId(resource: unknown) {
@@ -147,12 +147,12 @@ export function AuthScreen({ mode }: AuthScreenProps) {
     const email = emailAddress.trim();
 
     if (!email) {
-      setAuthError("Enter your email address.");
+      setAuthError("請輸入電子郵件。");
       return;
     }
 
     if (isSignUp && !password) {
-      setAuthError("Enter a password.");
+      setAuthError("請輸入密碼。");
       return;
     }
 
@@ -343,7 +343,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
         return;
       }
 
-      setAuthError("Social sign in was cancelled or could not be completed.");
+      setAuthError("社群登入已取消或無法完成。");
     } catch (error) {
       posthog.captureException(error, { strategy, auth_mode: mode });
       setAuthError(getAuthErrorMessage(error));
@@ -367,7 +367,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       >
         <View className="mx-auto min-h-full w-full max-w-[430px] flex-1">
           <Pressable
-            accessibilityLabel="Go back"
+            accessibilityLabel="返回"
             className="h-[38px] w-[38px] items-start justify-center"
             onPress={() => router.back()}
           >
@@ -376,12 +376,12 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
           <View className="mt-[18px]">
             <Text className="font-poppins-bold text-[31px] leading-[40px] text-lingua-text-primary">
-              {isSignUp ? "Create your account" : "Welcome back"}
+              {isSignUp ? "建立你的帳號" : "歡迎回來"}
             </Text>
             <Text className="mt-[16px] font-poppins text-[19px] leading-[27px] text-[#69728c]">
               {isSignUp
-                ? "Start your language journey today "
-                : "Continue your language journey "}
+                ? "今天開始你的語言學習旅程 "
+                : "繼續你的語言學習旅程 "}
               {"\u2728"}
             </Text>
           </View>
@@ -400,7 +400,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           <View className="gap-[16px]">
             <View className="h-[86px] justify-center rounded-[16px] border border-[#eef0f5] bg-white px-[19px]">
               <Text className="font-poppins-medium text-[15px] leading-[21px] text-[#77819b]">
-                Email
+                電子郵件
               </Text>
               <TextInput
                 autoCapitalize="none"
@@ -419,7 +419,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
               <View className="h-[86px] flex-row items-center rounded-[16px] border border-[#eef0f5] bg-white px-[19px]">
                 <View className="flex-1">
                   <Text className="font-poppins-medium text-[15px] leading-[21px] text-[#77819b]">
-                    Password
+                    密碼
                   </Text>
                   <TextInput
                     onChangeText={setPassword}
@@ -433,7 +433,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
                 </View>
                 <Pressable
                   accessibilityLabel={
-                    isPasswordVisible ? "Hide password" : "Show password"
+                    isPasswordVisible ? "隱藏密碼" : "顯示密碼"
                   }
                   className="h-[44px] w-[44px] items-end justify-center"
                   onPress={() => setPasswordVisible((current) => !current)}
@@ -454,7 +454,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
             onPress={handleEmailAuth}
           >
             <Text className="font-poppins-bold text-[22px] leading-[29px] text-white">
-              {isSubmitting ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
+              {isSubmitting ? "請稍候..." : isSignUp ? "註冊" : "登入"}
             </Text>
           </Pressable>
           {authError ? (
@@ -466,7 +466,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           <View className="mt-[35px] flex-row items-center gap-[20px]">
             <View className="h-px flex-1 bg-[#e8eaf1]" />
             <Text className="font-poppins text-[18px] leading-[24px] text-[#77819b]">
-              or continue with
+              或使用以下方式繼續
             </Text>
             <View className="h-px flex-1 bg-[#e8eaf1]" />
           </View>
@@ -491,13 +491,13 @@ export function AuthScreen({ mode }: AuthScreenProps) {
 
           <View className="mt-[44px] flex-row justify-center">
             <Text className="font-poppins text-[17px] leading-[24px] text-[#77819b]">
-              {isSignUp ? "Already have an account? " : "Need an account? "}
+              {isSignUp ? "已經有帳號了嗎？" : "還沒有帳號嗎？"}
             </Text>
             <Pressable
               onPress={() => router.push(isSignUp ? "/sign-in" : "/sign-up")}
             >
               <Text className="font-poppins-semibold text-[17px] leading-[24px] text-lingua-deep-purple">
-                {isSignUp ? "Log in" : "Sign up"}
+                {isSignUp ? "登入" : "註冊"}
               </Text>
             </Pressable>
           </View>
@@ -563,10 +563,10 @@ function VerificationModal({
         <View className="rounded-t-[28px] bg-white px-[28px] pb-[34px] pt-[28px]">
           <View className="mx-auto h-[4px] w-[48px] rounded-full bg-[#d9dde8]" />
           <Text className="mt-[28px] text-center font-poppins-bold text-[24px] leading-[31px] text-lingua-text-primary">
-            Check your email
+            查看你的電子郵件
           </Text>
           <Text className="mt-[10px] text-center font-poppins text-[15px] leading-[23px] text-[#69728c]">
-            We sent you a verification code. Enter the 6 digits below.
+            我們已寄出驗證碼，請輸入下方 6 位數字。
           </Text>
           {error ? (
             <Text className="mt-[12px] text-center font-poppins text-[14px] leading-[21px] text-[#ff4b4b]">

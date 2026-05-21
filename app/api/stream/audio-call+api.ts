@@ -109,12 +109,12 @@ export async function POST(request: Request) {
       {
         id: safeUserId,
         image: body.user?.image ?? undefined,
-        name: body.user?.name ?? "Language learner",
+        name: body.user?.name ?? "語言學習者",
         role: "user",
       },
       {
         id: agentUserId,
-        name: "Lingua AI Teacher",
+        name: "Lingua AI 老師",
         role: "admin",
       },
     ]);
@@ -170,14 +170,14 @@ export async function POST(request: Request) {
       user: {
         id: safeUserId,
         image: body.user?.image ?? null,
-        name: body.user?.name ?? "Language learner",
+        name: body.user?.name ?? "語言學習者",
       },
     });
   } catch (error) {
     console.error("Failed to create Stream audio call", error);
 
     return Response.json(
-      { error: "Unable to create audio call." },
+      { error: "無法建立語音通話。" },
       { status: 500 },
     );
   }

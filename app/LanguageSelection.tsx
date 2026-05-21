@@ -83,7 +83,7 @@ export default function LanguageSelectionScreen() {
       >
         <View className="flex-row items-center justify-center">
           <Pressable
-            accessibilityLabel="Go back"
+            accessibilityLabel="返回"
             hitSlop={12}
             onPress={() => router.back()}
             style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
@@ -92,7 +92,7 @@ export default function LanguageSelectionScreen() {
           </Pressable>
 
           <Text className="font-poppins-semibold text-[26px] leading-[34px] text-lingua-text-primary">
-            Choose a language
+            選擇學習語言
           </Text>
         </View>
 
@@ -103,7 +103,7 @@ export default function LanguageSelectionScreen() {
             autoCorrect={false}
             clearButtonMode="never"
             onChangeText={setSearchQuery}
-            placeholder="Search languages"
+            placeholder="搜尋語言"
             placeholderTextColor="#6E7894"
             returnKeyType="search"
             style={styles.searchInput}
@@ -112,7 +112,7 @@ export default function LanguageSelectionScreen() {
 
           {searchQuery.length > 0 ? (
             <Pressable
-              accessibilityLabel="Clear language search"
+              accessibilityLabel="清除語言搜尋"
               hitSlop={10}
               onPress={() => setSearchQuery("")}
               style={({ pressed }) => pressed && styles.pressed}
@@ -123,7 +123,7 @@ export default function LanguageSelectionScreen() {
         </View>
 
         <Text className="mt-[34px] font-poppins-semibold text-[22px] leading-[30px] text-lingua-text-primary">
-          Popular
+          熱門語言
         </Text>
 
         <View className="mt-[20px] gap-[2px]">
@@ -140,16 +140,16 @@ export default function LanguageSelectionScreen() {
         {filteredLanguages.length === 0 ? (
           <View className="mt-[28px] items-center rounded-[24px] border border-[#EEF0F5] bg-[#FBFBFD] px-[24px] py-[26px]">
             <Text className="font-poppins-semibold text-[18px] leading-[26px] text-lingua-text-primary">
-              No languages found
+              找不到語言
             </Text>
             <Text className="mt-[6px] text-center font-poppins text-[15px] leading-[22px] text-[#6E7894]">
-              Try searching by language name, native name, or short code.
+              請嘗試搜尋語言名稱、原文名稱或縮寫。
             </Text>
           </View>
         ) : null}
 
         <Pressable
-          accessibilityLabel={`Confirm ${selectedLanguage.name}`}
+          accessibilityLabel={`確認${selectedLanguage.name}`}
           className="mt-[24px] flex-row items-center justify-center gap-[12px] rounded-[26px] bg-lingua-deep-purple px-[22px] py-[18px]"
           disabled={!selectedLanguage}
           onPress={handleConfirmLanguage}
@@ -157,7 +157,7 @@ export default function LanguageSelectionScreen() {
         >
           <Ionicons name="checkmark-circle" size={26} color="#FFFFFF" />
           <Text className="font-poppins-bold text-[19px] leading-[27px] text-white">
-            Continue with {selectedLanguage.name}
+            繼續學習{selectedLanguage.name}
           </Text>
         </Pressable>
 

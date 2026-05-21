@@ -41,18 +41,18 @@ export default function OnboardingScreen() {
 
         <View className="mt-[42px]">
           <Text className="font-poppins-bold text-[31px] leading-[40px] text-lingua-text-primary">
-            Your AI language{"\n"}
-            <Text className="text-lingua-deep-purple">teacher.</Text>
+            你的 AI 語言{"\n"}
+            <Text className="text-lingua-deep-purple">老師。</Text>
           </Text>
           <Text className="mt-[16px] font-poppins text-[19px] leading-[27px] text-[#69728c]">
-            Real conversations, personalized lessons, anytime,{"\n"}
-            anywhere.
+            真實對話、個人化課程，隨時隨地{"\n"}
+            都能開始練習。
           </Text>
         </View>
 
         <View className="relative mt-[32px] min-h-[360px] items-center">
           <Text className="absolute left-[10px] top-[142px] font-poppins-bold text-[14px] leading-[18px] text-lingua-text-primary">
-            Hello!
+            哈囉！
           </Text>
           <Text className="absolute right-[2px] top-[42px] font-poppins-bold text-[14px] leading-[18px] text-lingua-text-primary">
             ¡Hola!
@@ -82,7 +82,7 @@ export default function OnboardingScreen() {
         >
           <View className="h-full flex-row items-center justify-center gap-2">
             <Text className="font-poppins-bold text-[22px] leading-[29px] text-white">
-              Get Started
+              開始學習
             </Text>
             <Text className="font-poppins text-[32px] leading-[32px] text-white">
               ›

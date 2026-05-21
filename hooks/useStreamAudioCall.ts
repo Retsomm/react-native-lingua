@@ -173,7 +173,7 @@ export function useStreamAudioCall({
 
   const startCall = useCallback(async () => {
     if (!user) {
-      setErrorMessage("Sign in before starting an audio lesson.");
+      setErrorMessage("開始語音課程前請先登入。");
       setStatus("error");
       return null;
     }
@@ -226,7 +226,7 @@ export function useStreamAudioCall({
         throw new Error(
           "error" in data && data.error
             ? data.error
-            : "Unable to create audio session.",
+            : "無法建立語音課程。",
         );
       }
 
@@ -328,7 +328,7 @@ export function useStreamAudioCall({
       setIsMuted(false);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to create audio session.",
+        error instanceof Error ? error.message : "無法建立語音課程。",
       );
       setStatus("error");
       return null;
@@ -375,7 +375,7 @@ export function useStreamAudioCall({
         throw new Error(
           "error" in agentData && agentData.error
             ? agentData.error
-            : "Unable to connect the AI teacher.",
+            : "無法連線 AI 老師。",
         );
       }
 
@@ -391,7 +391,7 @@ export function useStreamAudioCall({
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Unable to connect the AI teacher.",
+          : "無法連線 AI 老師。",
       );
       return false;
     }
@@ -433,12 +433,12 @@ export function useStreamAudioCall({
       if (didConnectAgent) {
         setCaptionStatus("live");
       } else {
-        setCaptionErrorMessage("Unable to connect live transcript captions.");
+        setCaptionErrorMessage("無法連線即時字幕。");
         setCaptionStatus("error");
       }
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to join audio call.",
+        error instanceof Error ? error.message : "無法加入語音通話。",
       );
       setStatus("error");
     }
@@ -468,7 +468,7 @@ export function useStreamAudioCall({
       setStatus("joined");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update microphone.",
+        error instanceof Error ? error.message : "無法更新麥克風。",
       );
       setStatus("error");
     }
@@ -489,7 +489,7 @@ export function useStreamAudioCall({
       setIsMuted(!enabled);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update microphone.",
+        error instanceof Error ? error.message : "無法更新麥克風。",
       );
       setStatus("error");
     }
@@ -527,7 +527,7 @@ export function useStreamAudioCall({
       setStatus("joined");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update camera.",
+        error instanceof Error ? error.message : "無法更新相機。",
       );
       setStatus("error");
     }
@@ -558,7 +558,7 @@ export function useStreamAudioCall({
     } catch (error) {
       errorOccurred = true;
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to end audio call.",
+        error instanceof Error ? error.message : "無法結束語音通話。",
       );
       setStatus("error");
     } finally {
@@ -714,7 +714,7 @@ function getNextCustomEventCaptions(
     id: payload.captionId || `${payload.speakerId ?? role}-${Date.now()}`,
     role,
     speakerId: payload.speakerId ?? role,
-    speakerName: role === "teacher" ? "AI Teacher" : "You",
+    speakerName: role === "teacher" ? "AI 老師" : "你",
     text,
   };
   const withoutCurrentCaption = currentCaptions.filter(

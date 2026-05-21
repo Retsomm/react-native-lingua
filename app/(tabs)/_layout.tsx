@@ -26,11 +26,11 @@ export default function TabsLayout() {
       screenOptions={{ headerShown: false }}
       tabBar={(props) => <BottomTabBar {...props} />}
     >
-      <Tabs.Screen name="home" options={{ title: "Home" }} />
-      <Tabs.Screen name="learn" options={{ title: "Learn" }} />
-      <Tabs.Screen name="ai-teacher" options={{ title: "AI Teacher" }} />
-      <Tabs.Screen name="chat" options={{ title: "Chat" }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+      <Tabs.Screen name="home" options={{ title: "首頁" }} />
+      <Tabs.Screen name="learn" options={{ title: "學習" }} />
+      <Tabs.Screen name="ai-teacher" options={{ title: "AI 老師" }} />
+      <Tabs.Screen name="chat" options={{ title: "聊天" }} />
+      <Tabs.Screen name="profile" options={{ title: "個人" }} />
     </Tabs>
   );
 }

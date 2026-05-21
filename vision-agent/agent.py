@@ -22,6 +22,7 @@ SERVICE_DIR = Path(__file__).resolve().parent
 AGENT_USER_ID = "lingua-ai-teacher"
 MAX_METADATA_LENGTH = 80
 MAX_CAPTION_BUFFER_LENGTH = 24
+USER_LANGUAGE = "台灣國語"
 CAPTION_BUFFERS: dict[str, list[dict[str, Any]]] = {}
 CAPTION_EVENTS: dict[str, asyncio.Event] = {}
 logger = logging.getLogger(__name__)
@@ -302,14 +303,16 @@ def build_teacher_instructions(**kwargs: Any) -> str:
 
     return "\n".join(
         [
-            "You are Lingua's friendly AI language teacher.",
-            "You are voice only. Keep every response short, clear, and easy to repeat.",
-            "Always speak English by default, even when teaching another language.",
-            f"Teach {language} through English.",
-            f"The current lesson is {lesson}.",
-            "Start by greeting the learner, naming the lesson, and asking them to repeat one simple phrase.",
-            "When the learner answers, give brief pronunciation feedback and continue with one next practice prompt.",
-            "Do not use markdown, bullets, special symbols, or long explanations in spoken output.",
+            "你是 Lingua 友善的 AI 語言老師。",
+            "你只透過語音教學。每次回答都要短、清楚、好跟讀。",
+            f"使用者目前的介面語言是{USER_LANGUAGE}。你必須預設用{USER_LANGUAGE}和繁體中文詞彙說話。",
+            "除非使用者明確要求換語言，否則不要用英文解釋、寒暄或串場。",
+            "英文、法文、西班牙文、日文、韓文等外語只能出現在本課要練習的目標單字或短句。",
+            f"教 {language} 時，一律用{USER_LANGUAGE}解釋意思、給回饋和引導下一步。",
+            f"目前課程是 {lesson}。",
+            f"開場先用{USER_LANGUAGE}問候學習者，說出課程名稱，然後請他跟讀一個簡單短句。",
+            f"學習者回答後，用一句簡短{USER_LANGUAGE}給發音回饋，再給下一個練習提示。",
+            "口語輸出不要使用 markdown、項目符號、特殊符號或冗長解釋。",
             *[item for item in lesson_context if item],
         ],
     )
@@ -324,7 +327,7 @@ async def create_agent(**kwargs: Any) -> Agent:
 
     agent = Agent(
         edge=getstream.Edge(),
-        agent_user=User(name="Lingua AI Teacher", id=AGENT_USER_ID),
+        agent_user=User(name="Lingua AI 老師", id=AGENT_USER_ID),
         instructions=instructions,
         llm=openai.Realtime(
             model="gpt-realtime",
@@ -363,20 +366,20 @@ async def join_call(
     response = await call.get()
     custom_data = get_call_custom_data(response)
     opening_prompt = (
-        "Greet the learner warmly in English as their AI teacher. Sound human, "
-        "energetic, and focused. Use one or two short conversational sentences, "
-        "then ask them to repeat one target-language word or phrase slowly."
+        f"請用{USER_LANGUAGE}溫暖地問候學習者，語氣自然、有精神、專注。"
+        "只說一到兩句簡短口語句子，接著請學習者慢慢跟讀一個本課目標語言的單字或短句。"
+        "除了要跟讀的目標單字或短句以外，不要說英文。"
     )
 
     if custom_data:
         lesson_instructions = build_teacher_instructions(custom=custom_data)
         apply_agent_instructions(agent, lesson_instructions)
         opening_prompt = (
-            "Now greet the learner warmly in English as their AI teacher for this "
-            "lesson only. Stay strictly within the current lesson goal, vocabulary, "
-            "phrases, and context. Use one or two short conversational sentences, "
-            "introduce one target-language word or phrase slowly with its English "
-            "meaning, and ask the learner to repeat it."
+            f"現在請用{USER_LANGUAGE}，以這堂課的 AI 老師身分溫暖問候學習者。"
+            "內容必須嚴格限於目前課程的目標、單字、短句和情境。"
+            "只說一到兩句簡短口語句子，慢慢介紹一個目標語言單字或短句，"
+            f"用{USER_LANGUAGE}說明意思，然後請學習者跟讀。"
+            "除了要跟讀的目標單字或短句以外，不要說英文。"
         )
 
     async with agent.join(call):

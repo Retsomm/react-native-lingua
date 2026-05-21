@@ -55,7 +55,7 @@ export async function GET(request: Request) {
 
       if (!response.ok) {
         return Response.json(
-          { error: "Unable to load live captions." },
+          { error: "無法載入即時字幕。" },
           { status: response.status },
         );
       }
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     console.error("Failed to load Vision Agent captions", error);
 
     return Response.json(
-      { error: "Unable to load live captions." },
+      { error: "無法載入即時字幕。" },
       { status: 500 },
     );
   }

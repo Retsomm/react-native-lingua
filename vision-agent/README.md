@@ -25,4 +25,4 @@ Development console mode:
 uv run agent.py run
 ```
 
-The mobile app should create the Stream call. The agent service joins that call by `call_type` and `call_id`, then speaks English by default while teaching the selected language through English.
+The mobile app should create the Stream call. The agent service joins that call by `call_type` and `call_id`, then speaks Mandarin Chinese as used in Taiwan by default while teaching the selected language through Traditional Chinese explanations.
